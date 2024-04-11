@@ -1,0 +1,49 @@
+---
+title: "MLFLow Hyperparameter Tuning"
+output: html_document
+date: "2024-04-11"
+---
+
+```{r}
+#Need to install mlflow python package 
+#python3 -m pip install mlflow 
+
+#Install the package 
+library(devtools)
+devtools::install_github("mlflow/mlflow", subdir = "mlflow/R/mlflow")
+
+#Clone the repo
+#git clone https://github.com/mlflow/mlflow
+
+## Upgrade to the latest development version
+#python3 -m pip install -e 'https://github.com/mxa256/tennis_EDA'
+
+#https://github.com/mlflow/mlflow/issues/1009
+
+library(mlflow)
+#export MLFLOW_PYTHON_BIN=/Users/mona/.virtualenvs/r-reticulate/bin/python
+#export MLFLOW_BIN=/Users/mona/.virtualenvs/r-reticulate/bin/mlflow
+Sys.setenv(MLFLOW_BIN=system("which mlflow"))
+Sys.setenv(MLFLOW_PYTHON_BIN=system("which python"))
+
+mlflow_set_experiment("Test")
+
+mlflow_ui()
+
+mlflow_set_tracking_uri("http://tracking-server:5000")
+
+```
+
+```{r}
+
+#Top two performing models based on model testing were 
+#RF + SVM Radial Kernel – AUC 0.828
+#RF + XGB – AUC 0.822
+
+#Now we will use ML Flow for hyperparameter tuning
+```
+
+```{r}
+
+```
+
