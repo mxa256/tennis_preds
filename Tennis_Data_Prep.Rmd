@@ -1,0 +1,1857 @@
+---
+title: "Tennis Modeling: ATP Tour"
+author: "Mona Ascha"
+date: "`Last Edited format(Sys.time(), '%d %B %Y'`"
+output: html_document
+---
+#Load packages
+```{r}
+
+library(Hmisc)
+library(ggplot2)
+library(tidyverse)
+library(knitr)
+library(dplyr)
+library(statsr)
+library(tableone)
+library(forcats)
+library(pander)
+library(lubridate)
+library(broom)
+library(dplyr)
+library(naniar)
+library(finalfit) 
+library(corrplot)
+library(neuralnet)
+library(data.table)
+library(GGally)
+library(fastDummies)
+library(xgboost)
+library(randomForest)
+```
+
+#Read in data
+```{r}
+
+filepath_matches <- "/Users/mona/Desktop/Tennis_Analytics/tennis_atp-master/atp_matches_"
+
+#data <- read.csv(filepath)
+
+#We will examine the past five years of matches 
+years <- c("2022", "2021", "2020", "2019", "2018")
+list_files = c()
+for (i in years){
+  file_name <- paste(filepath_matches, i, ".csv", sep="")
+  list_files = append(list_files, file_name)
+}
+
+fulldata <- data.frame()
+for (i in 1:length(list_files)){
+  yearly_data <- read.csv(list_files[i]) 
+  fulldata <- rbind(yearly_data, fulldata)
+}
+remove(yearly_data)
+
+#Load player data 
+filepath_players <- "/Users/mona/Desktop/Tennis_Analytics/tennis_atp-master/atp_players.csv"
+players <- read.csv(filepath_players)
+
+```
+
+
+#Data clean up
+```{r}
+#Data structure
+str(fulldata)
+str(players)
+
+# Examine with ff_glimpse
+ff_glimpse(fulldata)
+```
+
+#Remove nextgen finals
+```{r}
+#Nextgen finals is an exhibition tournament, points are not awarded and scoring is different
+#We will remove these tournaments from our model since they represent younger (and perhaps weaker) players and the scoring format is much different 
+fulldata <- fulldata %>% filter(tourney_name != "NextGen Finals")
+
+```
+
+#Remove Laver Cup
+```{r}
+#The laver cup doesn't do best of 3 sets, they do a 10 point tie breaker for the third set, so scoring is weird
+#It's also an exhibition event; although it does count for formal H2Hs, players may behave differently in an exhibition event, especially when playing dead rubbers
+#So we'll remove it
+fulldata <- fulldata %>% filter(tourney_name != "Laver Cup")
+
+```
+
+#Missing data
+```{r}
+#This allows us to find the number of missing values for each individual question
+missingfxn <- function(x){
+    print(100*sum(is.na(x))/length(x))
+}
+
+#This dataframe tells us the percentage of each variable that is missing in the data set
+missingdf <- as.data.frame(lapply(fulldata, missingfxn))
+datanames <- names(fulldata)
+missingdf <- rbind(datanames, missingdf)
+missingdf <- t(missingdf)
+missingdf %>% View() #This table is the percent missing values for each variable
+
+#Let's toy around with the naniar package functions
+n_miss(fulldata)
+prop_miss(fulldata)
+fulldata %>% is.na() %>% colSums()
+miss_var_summary(fulldata) %>% View() #This is pretty much the same info as the missing df
+
+# Get number of missings per participant (n and %)
+miss_case_summary(fulldata) #For each row, it tells us how much data is missing
+miss_case_table(fulldata) #For each 'n' of missing data, tells us how many rows have 'n' missing data
+
+#Some visualizations
+gg_miss_var(fulldata)
+vis_miss(fulldata)
+missing_plot(fulldata)
+
+#The winner entry variable actually does have missing values
+#For seeded players, we will designate "S" for seeded 
+fulldata$winner_entry <- ifelse(is.na(fulldata$winner_seed) == F, "S", fulldata$winner_entry)
+fulldata$loser_entry <- ifelse(is.na(fulldata$loser_seed) == F, "S", fulldata$loser_entry)
+
+#Replace any blank values with NAs
+fulldata <- fulldata %>% 
+  replace_with_na_at(.vars = c("winner_entry", "loser_entry"),
+                     condition = ~.x == "")
+
+#Fix some bad names
+fulldata["winner_name"][fulldata["winner_name"] == "Bor Artnak "] <- "Bor Artnak"
+fulldata["loser_name"][fulldata["loser_name"] == "Bor Artnak "] <- "Bor Artnak"
+
+fulldata["winner_name"][fulldata["winner_name"] == "Nicolas Alvarez Varona"] <- "Nicolas Alvarez"
+fulldata["loser_name"][fulldata["loser_name"] == "Nicolas Alvarez Varona"] <- "Nicolas Alvarez"
+
+
+#For some reason, heights are missing for a lot of people...let's inspect and isolate all unique missing heights for winners and losers 
+missing_winner_heights <- fulldata %>% select(winner_name, winner_ht) %>% filter(is.na(winner_ht) == T)
+missing_winner_heights <- unique(missing_winner_heights$winner_name)
+
+missing_loser_heights <- fulldata %>% select(loser_name, loser_ht) %>% filter(is.na(loser_ht) == T)
+missing_loser_heights <- unique(missing_loser_heights$loser_name)
+
+missing_all_heights <- c(missing_winner_heights, missing_loser_heights)
+missing_all_heights <- sort(unique(missing_all_heights))
+
+#For the rest of the missing variables, it's NA due to a walk over or retirement
+
+#Missing data for winner seed and loser seed most common, this makes sense because not everyone is seeded during a tournament
+#We will imputate this with 0--not ideal, but needed for modeling
+fulldata$winner_seed <- replace(fulldata$winner_seed, is.na(fulldata$winner_seed), 0)
+fulldata$loser_seed <- replace(fulldata$loser_seed, is.na(fulldata$loser_seed), 0)
+
+```
+
+#Filling in missing heights
+```{r}
+#In python I'd create a dictionary, we will use the equivalent here
+#Had to manually look up heights on google which was really annoying and still had some NA's. Tried to pull heights from ATP website whenever possible.
+
+dict = list(
+"Adolfo Daniel Vallejo"= 183,
+"Ainius Sabaliauskas" = 191,
+"Aissa Benchakroun" = 203,
+"Alan Fernando Rubio Fierros" = 175,
+"Alastair Gray"= 188,
+"Alberto Emmanuel Alvarado Larin" = NA,
+"Alberto Lim" = NA,
+"Aleksandar Kovacevic" = 183,
+"Aleksandre Bakshi" = 180,
+"Alen Avidzba" = 188, 
+"Alex Diaz" = 188,
+"Alex Fairbanks" = NA,
+"Alexander Ritschard" = 193,
+"Alexander Shevchenko" = 185,
+"Alexander Zgirovsky" = 191,
+"Alexis Galarneau" = 180,
+"Alexis Klegou" = 188,
+"Amer Naow" = NA,
+"Amir Hossein Badi" = NA,
+"Amr Elsayed Abdou Ahmed Mohamed" = NA,
+"Andrea Basso" = 185,
+"Andrej Nedic" = NA,
+"Andres Martin" = 183, 
+"Anthony Jackie Tang" = 183, 
+"Anthony Susanto" = NA,
+"Ari Fahresi" = NA,
+"Aristotelis Thanos" =  NA,
+"Ayed Zatar" = 200,
+"Aleksandar Vukic"= 188,
+"Alexandar Lazarov"= 191,
+"Alexander Erler"= 193,
+"Alibek Kachmazov"= 185,
+"Altug Celikbilek"= 183,
+"Aqeel Khan"= NA,
+"Arthur Cazaux"= 183,
+"Arthur Rinderknech"= 196,
+"August Holmgren"= 188,
+"Aziz Dougaz"= 188,
+"Aziz Ouakaa"= NA,
+
+
+"Beibit Zhukayev"=196, 
+"Ben Shelton"=193, 
+"Bogdan Borza"=185, 
+"Bor Artnak" = NA, 
+"Brandon Holt"=185, 
+"Brandon Perez" = 191, 
+"Brian Shi"=NA, 
+"Bu Yunchaokete"= 183, 
+
+
+
+"Caleb Chakravarthi"=188, 
+"Camilo Ugo Carabelli"=185, 
+"Carlos Gimeno Valero"=191, 
+"Cesar Cruz"=NA, 
+"Chak Lam Coleman Wong"=191, 
+"Cheng Yu Yu"=188, 
+"Ching Lam"=NA, 
+"Christian Sigsgaard"=193, 
+"Christoffer Konigsfeldt"=188, 
+"Christophe Tholl"=NA, 
+"Christopher Diaz Figueroa"=175, 
+"Chun Hun Wong"=170, 
+"Cole Gromley"=185, 
+"Coleman Wong"=191,
+
+
+"Daniel Cukierman"=NA, 
+"Daniels Tens"=NA, 
+"Daniil Ostapenkov"=NA, 
+"Darko Bojanovic"=180, 
+"David Agung Susanto"=NA, 
+"David Souto"=191, 
+"David Szintai"=NA, 
+"Delmas Ntcha"=NA, 
+"Diego Fernandez Flores"=185, 
+"Dimitri Badra"=NA, 
+"Dino Prizmic"=188, 
+"Dragos Nicolae Madaras"=191, 
+"Duilio Beretta"=178, 
+"Dzmitry Zhyrmont"=188,
+
+"Edas Butvilas"=191, 
+"Edgars Manusis"=NA, 
+"Edris Fetisleam"=NA, 
+"Eduardo Nava"=180, 
+"Eero Vasa"=188, 
+"Elmer Moller"=183, 
+"Eric Jr. Olivarez"=178, 
+"Erik Arutiunian"=NA, 
+"Evan Furness"=173, 
+"Evgenii Tiurnev"=191,
+
+
+"Facundo Mena"=183, 
+"Filip Misolic"=180, 
+"Finn Reynolds"=NA, 
+"Fitriadi M Rifqi"=NA, 
+"Flavio Cobolli"=NA, 
+"Francesco Maestrelli"=196, 
+"Francesco Passaro"=180, 
+"Franco Agamenone"=191, 
+"Franz Luna Lavidalie"=NA,
+
+
+"Gabi Adrian Boitan"=185, 
+"Gabriel Diallo"=203, 
+"Gabriel Donev"=180, 
+"Gijs Brouwer"=191, 
+"Gilles Arnaud Bailly"=180, 
+"Gonzalo Villanueva"=175, 
+"Gunawan Trismuwantara"=NA, 
+
+
+"Hady Habib"= 188,
+"Hasan Ibrahim"=NA, 
+"Haydn Lewis"=NA, 
+"Hazem Naw"=183, 
+"Henri Squire"=196, 
+"Hernan Casanova"=178, 
+"Hernando Jose Escurra Isnardi"=NA, 
+"Hong Kit Jack Wong"=NA, 
+"Hugo Nys"=185, 
+
+"Ignacio Garcia"=178, 
+"Isaac Becroft"=178, 
+"Ismael Changawa Ruwa Mzai"=NA, 
+"Ivan Endara"=179, 
+"Ivan Gakhov"=191,
+
+
+"Jabor Al Mutawa"=180, 
+"Jack Mingjie Lin"=178, 
+"Jad Ballout"=NA, 
+"Jan Zielinski"=180, 
+"Jeson Patrombon"=NA, 
+"Jesper De Jong"=180, 
+"Jirat Navasirisomboon"=175, 
+"Johannes Ingildsen"=193, 
+"John Bryan Decasa Otico"=NA, 
+"Jordi Munoz Abreu"=NA, 
+"Jordi Samper Montana"=NA, 
+"Jorge Brian Panta Herreros"=NA, 
+"Juan Alejandro Hernandez Serrano"=175, 
+"Juan Borba"=NA, 
+"Juan Lugo"=178, 
+"Julian Saborio"=185, 
+"Juncheng Shang"=180, 
+"Jurabek Karimov"=191, 
+"Justin Barki"=NA, 
+
+
+"Kaipo Marshall"=191, 
+"Karlis Ozolins"=193, 
+"Kasidit Samrej"=NA, 
+"Kenneth Raisma"=193, 
+"Kevin Cheruiyot"=NA, 
+"Ki Lung Ng"=175, 
+"Kiranpal Pannu"=185, 
+"Kuan Yi Lee"=178, 
+"Kyle Johnson"=196,
+
+
+"Learner Tien"=180, 
+"Lleyton Cronje"=188, 
+"Lluis Miralles"=191, 
+"Luca Van Assche"=178, 
+"Lucky Candra Kurniawan"=NA, 
+"Luis Carlos Alvarez Valdes"=178, 
+"Luis David Martinez"=178, 
+"Luis Diego Chavez Villalpando"=NA, 
+
+
+"M Abid Ali Khan Akbar"=NA, 
+"Maks Kasnikowski"=178, 
+"Manuel Guinard"=198, 
+"Mark Chigaazira"=183, 
+"Mark Lajal"=188, 
+"Martin Antonio Vergara Del Puerto"=NA, 
+"Matic Kriznik"=NA, 
+"Matthew Foster Estwick"=NA, 
+"Mattias Siimar"=NA, 
+"Max Hans Rehberg"=183, 
+"Menelaos Efstathiou"=183, 
+"Michael Bassem Sobhy"=NA, 
+"Michel Saade"=NA, 
+"Mili Poljicak"=185, 
+"Minjong Park"=NA, 
+"Mohsen Hossein Zade"=NA, 
+"Mubarak Shannan Zayid"=NA, 
+"Muhammad Althaf Dhaifullah"=NA, 
+"Muhammad Shoaib"=NA, 
+"Muzammil Murtaza"=NA, 
+
+"N Sriram Balaji"=183, 
+"Nam Hoang Ly"=175, 
+"Nathan Anthony Barki"=178, 
+"Nicholas David Ionel"=183, 
+"Nick Chappell"=178, 
+"Nicolaas Scholtz"=NA, 
+"Nikoloz Davlianidze"=NA,
+
+"Olaf Pieczkowski"=183,
+
+"Pak Long Yeung"=NA, 
+"Palaphoom Kovapitukted"=178, 
+"Peter August Anker"=NA, 
+"Peter Bothwell"=175, 
+"Philip Henning"=183, 
+"Phuong Van Nguyen"=175, 
+
+
+"Rafael Eduardo Gonzalez Retana"=NA, 
+"Rigele Te"=188, 
+"Rinky Hijikata"=178, 
+"Rio Noguchi"=168, 
+"Rodrigo Arus"=193, 
+"Rodrigo Crespo Piedra"=NA, 
+"Rodrigo Pacheco Mendez"=191, 
+"Roey Tabet"=NA, 
+"Roman Hassanov"=NA, 
+"Rowland Phillips"=NA, 
+"Ryan Peniston"=183, 
+
+
+"Santiago Fa Rodriguez Taverna"=191, 
+"Scott Griekspoor"=188, 
+"Sebastian Arcila"=NA, 
+"Sebastian Dominguez"=175, 
+"Sebastian Dominko"=NA, 
+"Seong Chan Hong"=175, 
+"Sergey Fomin"=180, 
+"Shahin Khaledan"=NA, 
+"Sharmal Dissanayake"=NA, 
+"Sheil Kotecha"=NA, 
+"Shintaro Mochizuki"=NA, 
+"Sho Shimabukuro"=183, 
+"Siim Troost"=NA, 
+"Simen Sunde Bratholm"=NA, 
+"Simon Carr"=183, 
+"Skander Mansouri"=193, 
+"Skyler Butts"=178, 
+"Soren Hess Olesen"=188, 
+"Soufiane El Mesbahi"=183, 
+"Stylianos Christodoulou"=NA, 
+"Sylvestre Monnou"=NA,
+
+
+"Takanyi Garanganga"=185, 
+"Tegar Abdi Satrio Wibowo"=NA, 
+"Thabo Ncube"=180, 
+"Thehan Sanjaya Wijemanne"=NA, 
+
+
+"Valentin Vacherot"=193, 
+"Viacheslav Bielinskyi"=NA,
+"Vilius Gaubas"= NA,
+"Vladimir Ivanov"=NA, 
+"Vladyslav Orlov"=188,
+
+
+"Wai Yu Kai"=NA, 
+"William Blumberg"=188,
+
+"Xavier Lawrence"=188, 
+"Yanki Erel"=178, 
+"Yasitha De Silva"=NA, 
+"Yassir Kilani"=175, 
+"Yunseong Chung"=178, 
+"Yuttana Charoenphon"=178)
+
+dict <- dict %>% as_tibble() 
+heights_df <- pivot_longer(dict, cols = everything())
+colnames(heights_df) <- c("Name", "Height")
+
+#Fill in the missing winner heights
+data2 <- left_join(fulldata, heights_df, by = c("winner_name" = "Name"))
+data2$winner_ht <- dplyr::coalesce(data2$winner_ht, data2$Height)
+
+#Fill in the missing loser heights
+data3 <- left_join(data2, heights_df, by = c("loser_name" = "Name"), suffix = c("_orig", "_dupe"))
+data3$loser_ht <- dplyr::coalesce(data3$loser_ht, data3$Height_dupe)
+
+#Let's check
+table(is.na(fulldata$winner_ht))
+table(is.na(data3$winner_ht))
+
+table(is.na(fulldata$loser_ht))
+table(is.na(data3$loser_ht))
+
+#We got rid of lots of NA's!
+#Now let's drop the Height_orig and Height_dupe vars since we don't need them anymore
+data3 <- select(data3, -c("Height_orig", "Height_dupe"))
+
+##We also  want to make a variable for matches that were walked over or retired
+data3$ret <- ifelse(data3$score == "W/O" | grepl("RET", data3$score), "Yes", "No")
+```
+
+
+#Re-examine missingness
+```{r}
+#Let's re-examine the missingness
+miss_var_summary(data3) %>% View() #This is pretty much the same info as the missing df
+
+#Some visualizations
+gg_miss_var(data3)
+vis_miss(data3)
+
+#There are some rows with many missing values. Let's inspect and remove these
+sort(rowSums(is.na(data3)), decreasing=T)
+
+#Any row with > 20 values missing will be removed
+data3 <- data3[rowSums(is.na(data3)) < 20, ] 
+gg_miss_var(data3)
+vis_miss(data3)
+
+#On second thought, the winner_entry and loser_entry columns aren't terribly helpful so we'll drop them 
+data3 <- data3 %>% select(-c("winner_entry", "loser_entry"))
+
+#Let's keep complete cases only 
+data3 <- data3[complete.cases(data3),]
+
+#Make a copy of the dataset
+data4 <- data3
+```
+
+#Data clean up and feature extraction
+```{r}
+
+#We want to make a feature for each set's score
+#This is going to create many new variables, so we will keep it in the data3 dataset. Data4 will be used for modeling, etc.
+
+#We have to extract the set score 
+#Make a copy of score variable
+data3$score_full <- data3$score
+data3 <- separate(data3, score_full, into = c("set_1", "set_2", "set_3", "set_4", "set_5"), sep = " ")
+
+data3 <- data3 %>% replace_with_na(replace = list(set_1 = c("RET", "W/O"), set_2 = "RET", set_3 = "RET", set_4 = "RET", set_5 = "RET"))
+
+#Inspecting data to make sure it makes sense 
+#data3 %>% select(score, set_1, set_2, set_3, set_4, set_5) %>% View()
+
+##We want to make a feature that states IF a TB occurred and if so, how many for the winner and how many for the loser
+data3$num_tbs <- str_count(data3$score, fixed("("))
+data3$winner_tb_num <- str_count(data3$score, fixed("7-6"))
+data3$loser_tb_num <- str_count(data3$score, fixed("6-7"))
+
+##We want to make a feature for each set's TB score if it occurred
+data3$set_1_tb_score <- as.numeric(regmatches(data3$set_1, gregexpr("(?<=\\().*?(?=\\))", data3$set_1, perl=T)))
+data3$set_2_tb_score <- as.numeric(regmatches(data3$set_2, gregexpr("(?<=\\().*?(?=\\))", data3$set_2, perl=T)))
+data3$set_3_tb_score <- as.numeric(regmatches(data3$set_3, gregexpr("(?<=\\().*?(?=\\))", data3$set_3, perl=T)))
+data3$set_4_tb_score <- as.numeric(regmatches(data3$set_4, gregexpr("(?<=\\().*?(?=\\))", data3$set_4, perl=T)))
+data3$set_5_tb_score <- as.numeric(regmatches(data3$set_5, gregexpr("(?<=\\().*?(?=\\))", data3$set_5, perl=T)))
+
+##We want to make a feature saying if the winner or the loser of the match won the tiebreaks of each set
+data3$set_1_tb_won <- ifelse(grepl("7-6", data3$set_1), "Winner", ifelse(grepl("6-7", data3$set_1), "Loser", NA))
+data3$set_2_tb_won <- ifelse(grepl("7-6", data3$set_2), "Winner", ifelse(grepl("6-7", data3$set_2), "Loser", NA))
+data3$set_3_tb_won <- ifelse(grepl("7-6", data3$set_3), "Winner", ifelse(grepl("6-7", data3$set_3), "Loser", NA))
+data3$set_4_tb_won <- ifelse(grepl("7-6", data3$set_4), "Winner", ifelse(grepl("6-7", data3$set_4), "Loser", NA))
+data3$set_5_tb_won <- ifelse(grepl("7-6|13-12", data3$set_5), "Winner", ifelse(grepl("6-7|12-13", data3$set_5), "Loser", NA))
+
+#Need to make a variable stating if EACH set went to a TB or not 
+data3$set_1_had_tb <- ifelse(grepl("7-6", data3$set_1), "Yes", ifelse(grepl("6-7", data3$set_1), "Yes", "No"))
+data3$set_2_had_tb <- ifelse(grepl("7-6", data3$set_2), "Yes", ifelse(grepl("6-7", data3$set_2), "Yes", "No"))
+data3$set_3_had_tb <- ifelse(grepl("7-6", data3$set_3), "Yes", ifelse(grepl("6-7", data3$set_3), "Yes", "No"))
+data3$set_4_had_tb <- ifelse(grepl("7-6", data3$set_4), "Yes", ifelse(grepl("6-7", data3$set_4), "Yes", "No"))
+data3$set_5_had_tb <- ifelse(grepl("7-6|13-12", data3$set_5), "Yes", ifelse(grepl("6-7|12-13", data3$set_5), "Yes", "No"))
+
+#Let's check if all these variables make sense
+data3 %>% select(score, set_1, set_1_had_tb, set_1_tb_score, set_1_tb_won) %>% View()
+#They do!
+
+```
+
+#EDA: correlation matrix
+```{r}
+#We'll pick some basic variables for our initial correlation map
+#The variables all must be numeric 
+vars_corr <- c("draw_size", "winner_seed", "winner_ht", "winner_age", "loser_seed", "loser_ht", "loser_age", "best_of", "minutes", "w_ace", "w_df", "w_svpt", "l_ace", "l_df", "l_svpt")
+
+data_cor <- data4[,vars_corr]
+
+#Make sure they're all numeric
+data_cor <- data_cor %>% mutate_at(colnames(data_cor), as.numeric)
+
+#Creating correlation plot
+data.cor <- cor(data_cor, use="pairwise.complete.obs")
+corrplot(data.cor)
+
+```
+
+
+#EDA: Who won the most matches in the last five years?
+```{r}
+#Let's isolate the top 20 players with the most wins
+#We'll use the fulldata set for this, as the cleaned up dataset has some rows dropped and we will use it for modeling
+win_data <- fulldata %>% select(winner_name) %>% group_by(winner_name) %>% count(sort = TRUE) 
+win_data <- head(win_data, 20)
+
+#Let's plot them 
+winners_plot <- ggplot(win_data) + 
+  geom_col(mapping = aes(x=reorder(winner_name, -n), y=n), fill='firebrick') + 
+  geom_text(mapping = aes(x=reorder(winner_name, -n), y=n, label=n), vjust=-0.5) +
+  theme(axis.text.x=element_text(angle=60, hjust=1)) + 
+  ggtitle("Top 20 Most ATP Match Wins (2018-2022)") + 
+  xlab("Player") + 
+  ylab("Number of Wins")
+  
+winners_plot
+```
+
+#Who had the best win percentages?
+```{r}
+
+#Again we'll use the full dataset for this, as the cleaned up dataset will be used for modeling
+win_freq <- plyr::count(fulldata, c("winner_name")) %>% arrange(desc(freq))
+colnames(win_freq) <- c("Name", "Wins")
+
+lose_freq <- plyr::count(fulldata, c("loser_name")) %>% arrange(desc(freq))
+colnames(lose_freq) <- c("Name", "Losses")
+
+total_freq <- merge(win_freq, lose_freq, on="Name")
+#data.table(total_freq)
+total_freq$total_match <- rowSums(total_freq[,2:3], na.rm=T)
+total_freq$win_perc <- total_freq$Wins/total_freq$total_match
+
+#To be considered, players must have played a minimum of 20 matches
+total_freq_percs <- total_freq %>% filter(total_match >= 20) %>% arrange(desc(win_perc))
+total_freq_percs$win_perc_round <- formattable::digits(round(total_freq_percs$win_perc*100, 1), digits = 1)
+
+#Plotting the top 20 win percentages 
+total_perc_20 <- head(total_freq_percs, 20)
+
+win_perc_plot <- ggplot(total_perc_20) + 
+  geom_col(mapping = aes(x=reorder(Name, -win_perc_round), y=win_perc_round), fill='firebrick') + 
+  geom_text(mapping = aes(x=reorder(Name, -win_perc_round), y=win_perc_round, label=win_perc_round), vjust=-0.5) +
+  theme(axis.text.x=element_text(angle=60, hjust=1)) + 
+  ggtitle("Top 20 ATP Win Percentages (2018-2022)") + 
+  xlab("Player") + 
+  ylab("Win Percentage")
+  
+win_perc_plot
+```
+
+#EDA: Let's see win percentages according to surface
+```{r}
+#We have no missing data for surface
+table(is.na(fulldata$surface))
+
+#Let's calculate the proportion of matches on each surface
+#Note that there is no distinction between indoor hard and outdoor hard, which does make a difference 
+
+for (i in seq(1,3)){
+  total <- addmargins(table(fulldata$surface))[4]
+  print(table(fulldata$surface)[i]*100/total)
+}
+
+#Most matches were played on hard courts, then clay, then grass
+#Let's make a function to create the tables we need of top 20 winners for each surface
+surface_fxn <- function(data=fulldata, surface_type){
+  #Filter data
+  surface_data <- data %>% dplyr::filter(surface==surface_type)
+  #Wins
+  surface_win_freq <- plyr::count(surface_data, c("winner_name")) %>% arrange(desc(freq))
+  colnames(surface_win_freq) <- c("Name", "Wins")
+  #Losses
+  surface_lose_freq <- plyr::count(surface_data, c("loser_name")) %>% arrange(desc(freq))
+  colnames(surface_lose_freq) <- c("Name", "Losses")
+  #Totals and percentage
+  total_freq <- merge(surface_win_freq, surface_lose_freq, on = "Name")
+  total_freq$total_match <- rowSums(total_freq[,2:3], na.rm=T)
+  total_freq$win_perc <- total_freq$Wins/total_freq$total_match
+  
+  #To be considered, players must have played a minimum of 10 matches (we lowered threshold because there's fewer matches per surface, especially grass)
+  total_freq_percs <- total_freq %>% filter(total_match >= 10) %>% arrange(desc(win_perc))
+  total_freq_percs$win_perc_round <- formattable::digits(round(total_freq_percs$win_perc*100, 1), digits = 1)
+  total_perc_20 <- head(total_freq_percs, 20)
+  
+#   #Plotting
+  win_perc_plot <- ggplot(total_perc_20) +
+    geom_col(mapping = aes(x=reorder(Name, -win_perc_round), y=win_perc_round), fill='firebrick') +
+    geom_text(mapping = aes(x=reorder(Name, -win_perc_round), y=win_perc_round, label=win_perc_round), vjust=-0.5) +
+    theme(axis.text.x=element_text(angle=60, hjust=1)) +
+    ggtitle(paste("Top 20 ATP Win Percentages on", surface_type, sep=" ")) +
+    xlab("Player") +
+    ylab("Win Percentage")
+
+print(win_perc_plot)
+}
+
+#HARD COURTS
+hard <- surface_fxn(fulldata, "Hard")
+
+#CLAY COURTS
+clay <- surface_fxn(fulldata, "Clay")
+
+#GRASS COURTS
+grass <- surface_fxn(fulldata, "Grass")
+
+```
+
+
+#EDA: If the first set goes to a tiebreak, how often does the winner of the first set tiebreak win the match? Is this significant, or due to random chance?
+```{r}
+#Filter out cases where first set went to TB
+first_set_tb <- data3 %>% filter(set_1_had_tb == "Yes")
+
+#Create a variable stating the first set TB winner won the match AS NUMERIC
+first_set_tb$set_1_tb_won_numeric <- as.numeric(as.factor(first_set_tb$set_1_tb_won)) - 1
+
+#We can look at the raw number here 
+addmargins(table(first_set_tb$set_1_tb_won_numeric))
+addmargins(table(first_set_tb$set_1_tb_won))
+377/506
+
+#Run a binomial test to see if this is different from random chance (seems like it is)
+binom.test(377, 506, 0.5)
+
+#So it looks like the winner of the first set tiebreak will go on to win the match 
+
+```
+
+#EDA: If the first set goes to a tiebreak, how often does the winner get a second set get a bagel or breadstick?
+```{r}
+
+#Create variable for second set bakery
+first_set_tb$second_set_bakery <- ifelse(grepl("6-0|6-1", first_set_tb$set_2), "Bakery", "No")
+
+addmargins(table(first_set_tb$second_set_bakery))
+print(48/506)
+
+#Over ALL of the second sets that DID NOT follow a tiebreak, how often does bakery happen
+#Use a reference proportion
+
+#Create a variable indicating if the second set was 6-0 or 6-1
+data3$second_set_bakery <- ifelse(grepl("6-0|6-1", data3$set_2), "Bakery", "No")
+data3$second_set_bakery <- as.factor(data3$second_set_bakery)
+data3$second_set_bakery <- relevel(data3$second_set_bakery, ref = "No")
+data3$second_set_bakery_numeric <- as.numeric(data3$second_set_bakery) - 1
+
+#Factorize 
+data3$set_1_had_tb <- as.factor(data3$set_1_had_tb)
+data3$set_1_tb_won <- as.factor(data3$set_1_tb_won)
+
+#Calculating the numbers 
+first_set_no_tb <- data3 %>% filter(set_1_had_tb == "No")
+first_set_no_tb$second_set_bakery <- ifelse(grepl("6-0|6-1", first_set_no_tb$set_2), "Bakery", "No")
+addmargins(table(first_set_no_tb$second_set_bakery))
+print(220/2221)
+
+#Seems like the rates of second set bagel or breadstick are independent of whether there was a first set tiebreak
+#We can do a z test of proportions for this - p.value is 0.839 which is not significant
+prop.test(x = c(48, 220), n = c(506, 2221), alternative='two.sided')
+
+```
+
+
+#EDA: How tall are players in the ATP? 
+```{r}
+#Mean height
+mean(heights_df$Height, na.rm=T)
+
+#Distribution of heights
+ggplot(heights_df, mapping=aes(x=Height)) + 
+  geom_histogram(bins = 20)
+
+#Get the mean height
+mean_height <- round(mean(heights_df$Height, na.rm = T), 2)
+
+#Pretty distribution of heights
+ggplot(heights_df) +
+  geom_density(aes(x=Height), alpha = 0.5, color="darkblue", fill="lightblue") +
+  geom_vline(aes(xintercept=mean(Height, na.rm = T)), color="darkblue", linetype="dashed", size=1) +
+  geom_text(x = 184, y = 0.02, label = sprintf("Mean Height = %s", mean_height), angle = 90) +
+  ggtitle("Density Distribution of Player Heights") + 
+  xlab("Player Height (cm)") + 
+  ylab("Density") +
+  theme_minimal() +
+  scale_x_continuous(breaks=seq(160, 210, 5))
+
+```
+
+#Additional feature extraction for our models
+```{r}
+#We use data4 for this
+str(data4)
+
+#Extracting year
+data4$year <- as.Date(as.character(data4$tourney_date), format="%Y%m%d", origin = "1964-10-22")
+data4$year <- year(data4$year)
+
+#Creating a column for each set for each player
+data4$score_full <- data4$score
+data4 <- separate(data4, score_full, into = c("set_1", "set_2", "set_3", "set_4", "set_5"), sep = " ")
+
+#This function returns 1 if the winner won the set and 0 if the loser won the set -- only works for sets 1-4 
+winner_set <- function(x){
+  case_when(as.integer(substr(data4[[x]], 1, 1)) > as.integer(substr(data4[[x]], 3, 3)) ~ 1,
+            as.integer(substr(data4[[x]], 1, 1)) < as.integer(substr(data4[[x]], 3, 3)) ~ 0)
+}
+
+#This function returns 1 if the loser won the set and 0 if the winner won the set -- only works for sets 1-4
+loser_set <- function(x){
+  case_when(as.integer(substr(data4[[x]], 1, 1)) < as.integer(substr(data4[[x]], 3, 3)) ~ 1,
+            as.integer(substr(data4[[x]], 1, 1)) > as.integer(substr(data4[[x]], 3, 3)) ~ 0)
+}
+
+
+#We want a binary variable that indicates which play won which set and how many sets total were won
+data4 <- data4 %>% mutate(w_set1 = winner_set('set_1'),
+                          w_set2 = winner_set('set_2'),
+                          w_set3 = winner_set('set_3'),
+                          w_set4 = winner_set('set_4'),
+                          #w_set5 = winner_set('set_5'),
+                          l_set1 = loser_set('set_1'),
+                          l_set2 = loser_set('set_2'),
+                          l_set3 = loser_set('set_3'),
+                          l_set4 = loser_set('set_4')
+                          #l_set5 = loser_set('set_5'),
+                          )
+
+#The fifth set is tricky because there is special scoring at slams, as sets must be won by two 
+#We know that the winner of the fifth set wins the match, so we can just code it as the winner
+data4$w_set5 <- ifelse(is.na(data4$set_5) == F & data4$ret == "No", 1, NA)
+data4$l_set5 <- ifelse(is.na(data4$set_5) == F & data4$ret == "No", 0, NA)
+
+#We'll imputate the missing with 0's
+data4 <- data4 %>% mutate(w_set1 = ifelse(is.na(w_set1), 0, w_set1),
+                          w_set2 = ifelse(is.na(w_set2), 0, w_set2),
+                          w_set3 = ifelse(is.na(w_set3), 0, w_set3),
+                          w_set4 = ifelse(is.na(w_set4), 0, w_set4),
+                          w_set5 = ifelse(is.na(w_set5), 0, w_set5),
+                          l_set1 = ifelse(is.na(l_set1), 0, l_set1),
+                          l_set2 = ifelse(is.na(l_set2), 0, l_set2),
+                          l_set3 = ifelse(is.na(l_set3), 0, l_set3),
+                          l_set4 = ifelse(is.na(l_set4), 0, l_set4),
+                          l_set5 = ifelse(is.na(l_set5), 0, l_set5)
+                          )
+
+#Calculate the total sets won during the match 
+data4 <- data4 %>% rowwise() %>% mutate(w_set_tot = sum(w_set1, w_set2, w_set3, w_set4, w_set5, na.rm=T),
+                                        l_set_tot = sum(l_set1, l_set2, l_set3, l_set4, l_set5, na.rm=T))
+
+      
+##PLEASE REFER TO WORD DOCUMENT FOR INFORMATION REGARDING STATISTICS AND MEANING
+##I WILL NOT BE ELABORATING IN DEPTH HERE
+#We need to calculate the percentages of first serves made
+data4$w_1st_made <- data4$w_1stIn/data4$w_svpt
+data4$l_1st_made <- data4$l_1stIn/data4$l_svpt
+
+#Calculate percent of second serves made
+#This is a little indirect. Basically, its the number of service points minus the number of first in, minus the number of double faults
+data4$w_2ndIn <- (data4$w_svpt - data4$w_1stIn - data4$w_df)
+data4$l_2ndIn <- (data4$l_svpt - data4$l_1stIn - data4$l_df)
+data4$w_2nd_made <- data4$w_2ndIn/(data4$w_svpt - data4$w_1stIn)
+data4$l_2nd_made <- data4$l_2ndIn/(data4$l_svpt - data4$l_1stIn)
+  
+#We need to calculate the winning first serve percentage (i.e. first serves won). This is a commons statistic in tennis and indicates the percentage of the points won on the first serve.
+#Generally, someone should be winning points on their first serve because it is stronger than the second serve (and players should hold their service games).
+data4$w_1st_serve_perc_win <- data4$w_1stWon/data4$w_svpt
+data4$l_1st_serve_perc_win <- data4$l_1stWon/data4$l_svpt
+
+#Winning percentage on second serve
+#Assuming a second serve doesn't count as an additional service point
+data4$w_2nd_serve_perc_win <- data4$w_2ndWon/(data4$w_svpt - data4$w_1stIn)
+data4$l_2nd_serve_perc_win <- data4$l_2ndWon/(data4$l_svpt - data4$l_1stIn)
+
+#We then use the percentage of first serves made and the winning percentage of first serve to create a first serve rating (> 60 is great, < 30 is horrible)
+#https://www.atptour.com/en/news/infosys-atp-insights-first-serve-rating
+data4$w_1st_serve_rating <- round((data4$w_1st_made*100)*data4$w_1st_serve_perc_win, 1)
+data4$l_1st_serve_rating <- round((data4$l_1st_made*100)*data4$l_1st_serve_perc_win, 1)
+
+#Second service rating
+data4$w_2nd_serve_rating <- round((data4$w_2nd_made*100)*data4$w_2nd_serve_perc_win, 1)
+data4$l_2nd_serve_rating <- round((data4$l_2nd_made*100)*data4$l_2nd_serve_perc_win, 1)
+
+#First serve effectiveness
+data4$w_1st_effect <- data4$w_1st_serve_perc_win/data4$w_2nd_serve_perc_win
+data4$l_1st_effect <- data4$l_1st_serve_perc_win/data4$l_2nd_serve_perc_win
+
+#Win percentage on return of serve
+data4$w_return_perc_win <- ((data4$l_1stIn - data4$l_1stWon) + ((data4$l_svpt-data4$l_1stIn) - data4$l_2ndWon - data4$l_df))/data4$l_svpt
+
+data4$l_return_perc_win <- ((data4$w_1stIn - data4$w_1stWon) + ((data4$w_svpt-data4$w_1stIn) - data4$w_2ndWon - data4$w_df))/data4$w_svpt
+
+#Point dominance ratio
+data4$w_servewon_perc_total <- (data4$w_1stWon+data4$w_2ndWon) / data4$w_svpt
+data4$w_returnwon_perc_total <- 1 - data4$w_servewon_perc_total
+
+data4$l_servewon_perc_total <- (data4$l_1stWon+data4$l_2ndWon) / data4$l_svpt
+data4$l_returnwon_perc_total <- 1 - data4$l_servewon_perc_total
+
+data4$w_point_dom <- data4$w_returnwon_perc_total/data4$l_returnwon_perc_total
+data4$l_point_dom <- data4$l_returnwon_perc_total/data4$w_returnwon_perc_total
+
+#Win percentage on break point
+data4$w_win_bp_perc <- data4$w_bpSaved/data4$w_bpFaced
+data4$l_win_bp_perc <- data4$l_bpSaved/data4$l_bpFaced
+
+#Break point ratios
+data4$w_bp_convert_perc <- (data4$l_bpFaced - data4$l_bpSaved)/data4$l_bpFaced
+data4$l_bp_convert_perc <- (data4$w_bpFaced - data4$w_bpSaved)/data4$w_bpFaced
+
+data4$w_bp_ratio <- data4$w_bp_convert_perc / data4$l_bp_convert_perc
+data4$l_bp_ratio <- data4$l_bp_convert_perc / data4$w_bp_convert_perc
+
+#Rank difference between opponents (rank 1 - rank 2)
+#Rank difference is more important than seed difference for a number of reasons
+data4$rank_diff <- data4$winner_rank - data4$loser_rank
+
+#Points to sets over-performing ratio
+data4$w_setwon_perc <- data4$w_set_tot / (data4$w_set_tot + data4$l_set_tot)
+data4$w_ptswon_perc <- (data4$w_1stWon + data4$w_2ndWon + data4$l_1stIn - data4$l_2ndWon + (data4$l_svpt - data4$l_1stIn) - data4$l_2ndWon)/(data4$w_svpt + data4$l_svpt)
+data4$w_pts2sets_op_ratio <- data4$w_setwon_perc/data4$w_ptswon_perc
+
+data4$l_setwon_perc <- data4$l_set_tot / (data4$l_set_tot + data4$w_set_tot)
+data4$l_ptswon_perc <- (data4$l_1stWon + data4$l_2ndWon + data4$w_1stIn - data4$w_2ndWon + (data4$w_svpt - data4$w_1stIn) - data4$w_2ndWon)/(data4$l_svpt + data4$w_svpt)
+data4$l_pts2sets_op_ratio <- data4$l_setwon_perc/data4$l_ptswon_perc
+
+#We have to separate the score into games 
+#Make a function
+set_separator <- function(x){
+  data4 <- separate(data4, x, into=c("w_1", "l_1", "TB_1"), sep=c("-|\\("))
+}
+
+data4 <- separate(data4, set_1, into=c("w_1", "l_1", "TB_1"), sep=c("-|\\("), remove = FALSE)
+data4 <- separate(data4, set_2, into=c("w_2", "l_2", "TB_2"), sep=c("-|\\("), remove = FALSE)
+data4 <- separate(data4, set_3, into=c("w_3", "l_3", "TB_3"), sep=c("-|\\("), remove = FALSE)
+data4 <- separate(data4, set_4, into=c("w_4", "l_4", "TB_4"), sep=c("-|\\("), remove = FALSE)
+data4 <- separate(data4, set_5, into=c("w_5", "l_5", "TB_5"), sep=c("-|\\("), remove = FALSE)
+
+
+data4 <- data4 %>% mutate_at(c("w_1", "l_1","w_2", "l_2", "w_3", "l_3", "w_4", "l_4","w_5", "l_5"), as.numeric)
+
+#Percentage of games won
+data4$w_gameswon_perc <- sum(data4$w_1 + data4$w_2 + data4$w_3 + data4$w_4 + data4$w_5, na.rm = T)/sum(data4$w_1 + data4$w_2 + data4$w_3 + data4$w_4 + data4$w_5 + data4$l_1 + data4$l_2 + data4$l_3 + data4$l_4 + data4$l_5, na.rm = T)
+
+data4$l_gameswon_perc <- sum(data4$l_1 + data4$l_2 + data4$l_3 + data4$l_4 + data4$l_5, na.rm = T)/sum(data4$w_1 + data4$w_2 + data4$w_3 + data4$w_4 + data4$w_5 + data4$l_1 + data4$l_2 + data4$l_3 + data4$l_4 + data4$l_5, na.rm = T)
+
+# Games to Sets Over-Performing Ratio
+data4$w_gmstosets_op_ratio <- data4$w_setwon_perc/data4$w_gameswon_perc
+data4$l_gmstosets_op_ratio <- data4$l_setwon_perc/data4$l_gameswon_perc
+
+##Points to games over-performing ratio
+data4$w_ptstogame_op_ratio <- data4$w_gameswon_perc/data4$w_ptswon_perc
+data4$l_ptstogame_op_ratio <- data4$l_gameswon_perc/data4$l_ptswon_perc
+
+#Break points over performing ratio
+data4$w_bpwon_perc <- (data4$l_bpFaced - data4$l_bpSaved + data4$w_bpSaved)/(data4$w_bpFaced + data4$l_bpFaced)
+data4$w_bp_op_ratio <- data4$w_win_bp_perc / data4$w_ptswon_perc
+
+data4$l_bpwon_perc <- (data4$w_bpFaced - data4$w_bpSaved + data4$l_bpSaved)/(data4$l_bpFaced + data4$w_bpFaced)
+data4$l_bp_op_ratio <- data4$l_win_bp_perc / data4$l_ptswon_perc
+
+#Break points saved over performing ratio 
+data4$w_bp_saved_perc <- data4$w_bpSaved / data4$w_bpFaced
+data4$w_bp_saved_op_ratio <- data4$w_bp_saved_perc / data4$w_servewon_perc_total
+
+data4$l_bp_saved_perc <- data4$l_bpSaved / data4$l_bpFaced
+data4$l_bp_saved_op_ratio <- data4$l_bp_saved_perc / data4$l_servewon_perc_total
+
+#Break point converted over performing ratio
+data4$w_bp_convert_op_ratio <- data4$w_bp_convert_perc / data4$w_returnwon_perc_total
+data4$l_bp_convert_op_ratio <- data4$l_bp_convert_perc / data4$l_returnwon_perc_total
+
+#Ace rate
+data4$w_ace_perc <- data4$w_ace/data4$w_svpt
+data4$l_ace_perc <- data4$l_ace/data4$l_svpt
+
+#DF rate
+data4$w_df_perc = data4$w_df/data4$w_svpt
+data4$l_df_perc = data4$l_df/data4$l_svpt
+
+
+
+#Before we continue, we have to add the prefix of the column names to p1 and p2 
+#We will shuffle and split the dataset 50/50 because we want p1 to be the winner half of the time 
+#In each 50/50 split, we make a variable that is binary, indicating if P1 won (1 if p1 won, 0 if p1 lost)
+#We will then merge the datasets back together 
+
+#First we'll make a copy
+data5 <- data4
+
+#Shuffle the dataset
+data5 <- data5[sample(nrow(data5)),]
+
+#Shuffle and split 50/50
+split = sort(sample(nrow(data5), nrow(data5)*.5))
+top_half <- data5[split,]
+bottom_half <- data5[-split,]
+
+#Create new column prefix -- half the time winner will be p1, other half, winner will be p2
+names(top_half) <- sub('^w_', 'p1_', names(top_half))
+names(top_half) <- sub('^winner_', 'p1_', names(top_half))
+names(top_half) <- sub('^l_', 'p2_', names(top_half))
+names(top_half) <- sub('^loser_', 'p2_', names(top_half))
+
+names(bottom_half) <- sub('^w_', 'p2_', names(bottom_half))
+names(bottom_half) <- sub('^winner_', 'p2_', names(bottom_half))
+names(bottom_half) <- sub('^l_', 'p1_', names(bottom_half))
+names(bottom_half) <- sub('^loser_', 'p1_', names(bottom_half))
+
+#Create a new variable indicating if p1 won the match or not
+top_half$p1_won <- 1
+bottom_half$p1_won <- 0 
+
+#Merging them back together
+data6 <- rbind(top_half, bottom_half)
+
+#Indicating if an upset happened 
+data6$p1_upset_scored <- ifelse(data6$p1_rank < data6$p2_rank & data6$p1_won == 1, 1, 0)
+data6$p2_upset_scored <- ifelse(data6$p2_rank < data6$p1_rank & data6$p1_won == 0, 1, 0)
+data6$p1_upset_against <- data6$p2_upset_scored
+data6$p2_upset_against <- data6$p1_upset_scored
+
+#Filter out matches where the player retired
+data6 <- data6 %>% filter(ret == "No")
+```
+
+#Elo rating
+```{r}
+#Elo is a new computational measure (in tennis) heavily utilized by Jeff Sackman 
+#This can give us insight into a player's performance over time and relative to others
+#He writes about it here: https://www.tennisabstract.com/blog/2019/12/03/an-introduction-to-tennis-elo/
+
+#One of the main purposes of any rating system is to predict the outcome of matches–something that Elo does better than most others, including the ATP and WTA rankings. The only input necessary to make a prediction is the difference between two players’ ratings, which you can then plug into the following formula:
+
+#1 – (1 / (1 + (10^((difference) / 400))))
+
+# If we wanted to forecast a rematch of the last match of the Davis Cup Finals, we would take the Elo ratings of Nadal and Denis Shapovalov (2203 and 1947), find the difference (256), and plug it into the formula, for a result of 81.4%, Nadal’s chance of winning. If we used the negative difference (-256), we’d get 18.6%, Shapovalov’s odds of scoring the upset.
+
+#I used the following code to make these calculations
+#https://github.com/sleepomeno/tennis_atp/blob/master/examples/elo.R
+
+matches <- data4[c("winner_name","loser_name","tourney_level","tourney_date","match_num")]
+firstDate <- as.Date("2018-01-01")
+matches$tourney_date <- as.Date(as.character(matches$tourney_date),format='%Y%m%d', origin = "1900/01/01")
+
+playersToElo <- new.env(hash=TRUE)
+matchesCount <- new.env(hash=TRUE)  
+
+# Run computeElo for elo results in an environment indexed by player names
+computeElo <- function() {
+    apply(matches,1,updateMatchesCountByRow)
+    apply(matches,1,computeEloByRow)
+     
+    return(playersToElo)
+}
+
+# Gives the highest elo ratings
+summaryPlayers <- function() {
+    playersToMax <- data.frame(ranking=1500,meanr=1500,medianr=1500,name="Nobody")
+    for (pl in ls(playersToElo)) {
+        player <- playersToElo[[pl]]
+        ## player <- player[order(player$date,player$num,decreasing=TRUE),]
+        ## player <- player[!duplicated(player$date),]
+        ## player <- player[order(player$date,player$num,decreasing=FALSE),]
+
+        newRow <- data.frame(ranking=max(player$ranking),meanr=mean(player$ranking),medianr=median(player$ranking),name=pl)
+        playersToMax <- rbind(playersToMax,newRow)
+    }
+
+    playersToMax <- playersToMax[order(playersToMax$ranking,decreasing=TRUE),]
+    return(playersToMax)
+}
+
+
+### Peaks
+
+getYear <- function(year) {
+    return(as.Date(paste(year,"-01-01",sep="")))
+}
+
+getYearMonth <- function(year,month) {
+    return(as.Date(paste(year,"-",month,"-01-",sep="")))
+}
+
+betweenDates <- function(date1,date2) {
+    playersToMax <- data.frame(ranking=1500,meanr=1500,medianr=1500,name="Nobody")
+    for (pl in ls(playersToElo)) {
+        player <- playersToElo[[pl]]
+        ## player <- player[order(player$date,player$num,decreasing=TRUE),]
+        ## player <- player[!duplicated(player$date),]
+        ## player <- player[order(player$date,player$num,decreasing=FALSE),]
+        player <- player[which(player$date>=date1),]
+        player <- player[which(player$date <= date2),]
+        newRow <- data.frame(ranking=max(player$ranking),meanr=mean(player$ranking),medianr=median(player$ranking),name=pl)
+        playersToMax <- rbind(playersToMax,newRow)
+    }
+    playersToMax <- playersToMax[order(playersToMax$ranking,decreasing=TRUE),]
+    return(playersToMax)
+}
+
+
+### Elo computation details
+computeEloByRow <- function(row) {
+    updateElo(playersToElo, row[1], row[2], row[1], row[3],row[4],row[5])
+    return(0)
+}
+
+updateMatchesCountByRow <- function(row) {
+    updateMatchesCount(row[1],row[2])
+    return(0)
+}
+
+updateMatchesCount <- function (playerA, playerB) {
+    if(is.null(matchesCount[[playerA]])) { matchesCount[[playerA]] <- 0 }
+    if(is.null(matchesCount[[playerB]])) { matchesCount[[playerB]] <- 0 }
+    matchesCount[[playerA]] <- matchesCount[[playerA]]+1
+    matchesCount[[playerB]] <- matchesCount[[playerB]]+1
+}
+
+updateElo <- function (plToElo, playerA, playerB, winner, level, matchDate,matchNum) {
+    rA <- tail(plToElo[[playerA]]$ranking,n=1)
+    rB <- tail(plToElo[[playerB]]$ranking,n=1)
+
+    if(is.null(rA)) {
+        plToElo[[playerA]] <- data.frame(ranking=1500, date=firstDate, num=0)
+        rA <- 1500
+    }
+    if(is.null(rB)) {
+        plToElo[[playerB]] <- data.frame(ranking=1500, date=firstDate, num=0)
+        rB <- 1500
+    }
+        
+    eA <- 1 / (1 + 10 ^ ((rB - rA)/400))
+    eB <- 1 / (1 + 10 ^ ((rA - rB)/400))
+    
+    if (winner==playerA) {
+        sA <- 1
+        sB <- 0
+    } else {
+        sA <- 0
+        sB <- 1
+    }
+
+    kA <- 250/((matchesCount[[playerA]]+5)^0.4)
+    kB <- 250/((matchesCount[[playerB]]+5)^0.4)
+    k <- ifelse(level == "G", 1.1, 1)
+
+    rA_new <- rA + (k*kA) * (sA-eA)
+    rB_new <- rB + (k*kB) * (sB-eB)
+
+    plToElo[[playerA]] <- rbind(plToElo[[playerA]],data.frame(ranking=rA_new, date=matchDate, num=matchNum))
+    plToElo[[playerB]] <- rbind(plToElo[[playerB]],data.frame(ranking=rB_new, date=matchDate, num=matchNum))
+}
+
+#Call computeElo
+elo <- computeElo()
+names_list <- names(elo)
+
+latest_elo_ratings <- data.frame()
+
+for (name in names_list){
+  last_row <- nrow(elo[[name]])
+  latest_elo <- elo[[name]][last_row, 1]
+  row <- data.frame(name, latest_elo)
+  latest_elo_ratings <- rbind(latest_elo_ratings, row)
+}
+
+#Now let's join the elo scores with the data 
+data6 <- left_join(data6, latest_elo_ratings, by=c("p1_name"="name"))
+data6 <- left_join(data6, latest_elo_ratings, by = c("p2_name"="name"), suffix = c("_p1", "_p2"))
+
+#It worked!
+#data4 %>% select(winner_name, loser_name, latest_elo_winner, latest_elo_loser) %>% View()
+#print(latest_elo_ratings %>% filter(name == "Leonardo Mayer"))
+
+#We can use delta elo to calculate the probability of winning a match
+#This calculation is different for 3 sets vs 5 sets 
+#https://github.com/JeffSackmann/tennis_misc/blob/master/fiveSetProb.py
+
+data6$p1_delta_elo <- data6$latest_elo_p1 - data6$latest_elo_p2
+data6$p2_delta_elo <- data6$latest_elo_p2 - data6$latest_elo_p1
+
+elo_odds_3sets <- function(delta){
+  1 - (1 / (1 + (10^((delta) / 400))))
+}
+
+#This gives us the odds of p1 relative to p2 
+data6$p1_bof3_odds <- sapply(data6$p1_delta_elo, elo_odds_3sets)
+
+#This gives us the odds of p2 relative to p1
+data6$p2_bof3_odds <- sapply(data6$p2_delta_elo, elo_odds_3sets)
+
+
+#Here p3, is the elo_odds_3sets
+elo_odds_5sets <- function(p3) {
+  p1 <- polyroot(c(-1 * p3, 0, 3, -2))[1]
+  p5 <- (p1^3) * (4 - 3 * p1 + (6 * (1 - p1) * (1 - p1)))
+  return(p5)
+}
+
+#This gives us the odds of p1 relative to p2 
+data6$p1_bo5_odds <- sapply(data6$p1_bof3_odds, elo_odds_5sets)
+data6$p1_bo5_odds <- as.numeric(data6$p1_bo5_odds)
+
+#This gives us the odds of p2 relative to p1
+data6$p2_bo5_odds <- sapply(data6$p2_bof3_odds, elo_odds_5sets)
+data6$p2_bo5_odds <- as.numeric(data6$p2_bo5_odds)
+
+#Some of these odds approach 1, and they return negative numbers. We will replace them with 1. 
+data6$p1_bo5_odds <- ifelse(data6$p1_bo5_odds < 0, 1.0, data6$p1_bo5_odds)
+data6$p2_bo5_odds <- ifelse(data6$p2_bo5_odds < 0, 1.0, data6$p2_bo5_odds)
+
+```
+
+#Rolling averages 
+
+```{r}
+#Rolling averages are more informative, since we won't have match data to make predictions
+data6 <- data6 %>% rename(p1_latest_elo = latest_elo_p1,
+                          p2_latest_elo = latest_elo_p2)
+
+p1 <- names(data6)[grepl("p1_", names(data6)) & names(data6) != "p1_won"]
+p2 <- names(data6)[grepl("p2_", names(data6))]
+info <- names(data6)[!grepl("p1_", names(data6)) & !grepl("p2_", names(data6))]
+
+# Create new column names
+new_cols <- c("Win", info, substr(p1, 4, nchar(p1)), "player")
+
+# Initialize an empty list
+l <- list()
+
+#Transform to long format
+#Two rows per match, one per each player
+for (i in 1:nrow(data6)) {
+  l <- c(l, list(c(data6[i, "p1_won"], data6[i, c(info, p1)])))
+  l <- c(l, list(c(abs(1 - data6[i, "p1_won"]), data6[i, c(info, p2)])))
+}
+
+# Create a new data frame from the list with the updated column names
+data7 <- as.data.frame(do.call(rbind, l))
+rows_split <- nrow(data7)/2
+
+data7_tophalf <- data7[1:(rows_split-1),]
+data7_bottomhalf <- data7[rows_split:nrow(data7),]
+
+data7_tophalf$player <- ifelse(data7_tophalf$p1_won==1, "P_1", "P_2")
+data7_bottomhalf$player <- ifelse(data7_bottomhalf$p1_won==1, "P_2", "P_1")
+
+data7_tophalf <- as.data.frame(lapply(data7_tophalf, unlist, use.names=TRUE))
+data7_bottomhalf <- as.data.frame(lapply(data7_bottomhalf, unlist, use.names=TRUE))
+
+data7 <- rbind(data7_tophalf, data7_bottomhalf)
+
+colnames(data7) <- new_cols
+
+#Check duplicates 
+duplicates <- data7 %>% dplyr::group_by(tourney_id, match_num, player) %>% dplyr::summarise(n = dplyr::n(), .groups = "drop") %>% dplyr::filter(n > 1L)
+
+# Create the "Win%" column
+data7$Win_percent <- data7$Win
+data7 <- as.data.frame(lapply(data7, unlist, use.names=TRUE))
+colnames(data7) <- gsub("^X", "",  colnames(data7))
+names(data7)
+
+# Columns to average
+nums_to_avg = c(
+    "minutes", 
+    "set_tot",
+    "ace", 
+    "df", 
+    "svpt",
+    "1stIn", 
+    "1stWon", 
+    "2ndWon", 
+    "SvGms",
+    "bpSaved", 
+    "bpFaced", 
+    "1st_made",
+    "2ndIn",
+    "2nd_made",
+    "1st_serve_perc_win", 
+    "2nd_serve_perc_win", 
+    "1st_serve_rating",
+    "2nd_serve_rating",
+    "1st_effect", 
+    "return_perc_win",
+    "servewon_perc_total",
+    "returnwon_perc_total",
+    "point_dom", 
+    "win_bp_perc",
+    "bp_convert_perc", 
+    "bp_ratio", 
+    "setwon_perc", 
+    "ptswon_perc",
+    "pts2sets_op_ratio",
+    "gameswon_perc", 
+    "gmstosets_op_ratio", 
+    "ptstogame_op_ratio",
+    "bpwon_perc",
+    "bp_op_ratio", 
+    "bp_saved_perc", 
+    "bp_saved_op_ratio",
+    "bp_convert_op_ratio", 
+    "ace_perc", 
+    "df_perc", 
+    "latest_elo", 
+    "delta_elo", 
+    "bof3_odds", 
+    "bo5_odds",
+    "upset_scored", 
+    "upset_against", 
+    "Win_percent"
+)
+
+#Make sure they;re all numeric
+data7 <- data7 %>% mutate_at(nums_to_avg, as.numeric)
+
+#Rolling averages 
+data7 <- data7 %>%
+group_by(name) %>%
+  mutate(across(.cols = nums_to_avg,
+                ~ runner::mean_run(x = ., k = 30, lag = 1),
+                .names = '{.col}_av'))
+
+rolled_up <- c()
+for (i in 1:length(nums_to_avg)) {
+  new_value <- paste(nums_to_avg[i], "_av", sep="")
+  rolled_up <- c(rolled_up, new_value)
+}
+
+rolled_up <- c(nums_to_avg, rolled_up)
+
+data8 <- data7 %>% pivot_wider(id_cols = c("tourney_id", "match_num"), 
+                               names_from = "player", 
+                               values_from = c("id", "name", "Win", "tourney_date", "tourney_name", "tourney_level", "draw_size", "surface", "score", "best_of", "round", "year", "ret", "rank", "rank_points", "set_1", "TB_1", "set_2", "TB_2", "set_3", "TB_3", "set_4", "TB_4", "set_5", "TB_5", "rank_diff", "seed", "hand", "ht", "age", rolled_up))
+
+
+#We have the rolled up data7 that is not pivoted wider and the rolled up pivot wider data8
+#We can work with both 
+#Instead of re-converting it into a wider format, I actually think keeping it like this could be beneficial in analysis time (we don't have to differ between player 1 and player 2, so we have a clearer picture of how stats correlate with other features).
+
+```
+
+#Remove unwanted cols
+
+```{r}
+#We have a lot of columns, let's get rid of redundant columns 
+
+dput(names(data8))
+
+#Get rid of redundant columns
+to_drop <- c("Win_P_2", "tourney_date_P_2", "tourney_name_P_2", "tourney_level_P_2", "draw_size_P_2", "surface_P_2", "score_P_2", "best_of_P_2", "round_P_2", "year_P_2", "set_1_P_2", "TB_1_P_2", "set_2_P_2", "TB_2_P_2", "set_3_P_2", "TB_3_P_2", "set_4_P_2", "TB_4_P_2", "set_5_P_2", "TB_5_P_2", "rank_diff_P_2", "minutes_P_2")
+
+data9 <- data8 %>% select(!to_drop)
+
+#Get rid of data that is not a rolling average
+to_drop_not_avg <- c("set_tot_P_1", 
+"set_tot_P_2", "ace_P_1", "ace_P_2", "df_P_1", "df_P_2", "svpt_P_1", 
+"svpt_P_2", "1stIn_P_1", "1stIn_P_2", "1stWon_P_1", "1stWon_P_2", 
+"2ndWon_P_1", "2ndWon_P_2", "SvGms_P_1", "SvGms_P_2", "bpSaved_P_1", 
+"bpSaved_P_2", "bpFaced_P_1", "bpFaced_P_2", "1st_serve_perc_win_P_1", 
+"1st_serve_perc_win_P_2", "2nd_serve_perc_win_P_1", "2nd_serve_perc_win_P_2", 
+"1st_serve_rating_P_1", "1st_serve_rating_P_2", "2nd_serve_rating_P_1", 
+"2nd_serve_rating_P_2", "1st_effect_P_1", "1st_effect_P_2", "return_perc_win_P_1", 
+"return_perc_win_P_2", "point_dom_P_1", "point_dom_P_2", "bp_convert_perc_P_1", 
+"bp_convert_perc_P_2", "bp_ratio_P_1", "bp_ratio_P_2", "setwon_perc_P_1", 
+"setwon_perc_P_2", "ptswon_perc_P_1", "ptswon_perc_P_2", "pts2sets_op_ratio_P_1", 
+"pts2sets_op_ratio_P_2", "gameswon_perc_P_1", "gameswon_perc_P_2", 
+"gmstosets_op_ratio_P_1", "gmstosets_op_ratio_P_2", "bpwon_perc_P_1", 
+"bpwon_perc_P_2", "bp_op_ratio_P_1", "bp_op_ratio_P_2", "bp_saved_perc_P_1", 
+"bp_saved_perc_P_2", "bp_saved_op_ratio_P_1", "bp_saved_op_ratio_P_2", 
+"bp_convert_op_ratio_P_1", "bp_convert_op_ratio_P_2", "ace_perc_P_1", 
+"ace_perc_P_2", "df_perc_P_1", "df_perc_P_2", "latest_elo_P_1", 
+"latest_elo_P_2", "delta_elo_P_1", "delta_elo_P_2", "bof3_odds_P_1", 
+"bof3_odds_P_2", "bo5_odds_P_1", "bo5_odds_P_2", "upset_scored_P_1", 
+"upset_scored_P_2", "upset_against_P_1", "upset_against_P_2", 
+"Win_percent_P_1", "Win_percent_P_2")
+
+data10 <- data9 %>% select(!to_drop_not_avg)
+
+#Rename some variables
+
+#This dataframe tells us the percentage of each variable that is missing in the data set
+missingdf <- as.data.frame(lapply(data10, missingfxn))
+datanames <- names(data10)
+missingdf <- rbind(datanames, missingdf)
+missingdf <- t(missingdf)
+missingdf %>% View() #This table is the percent missing values for each variable
+
+#The cols with missing data won't be used in our analysis anyway
+to_remove <- c("set_1_P_1", "TB_1_P_1", "set_2_P_1", "TB_2_P_1", "set_3_P_1", "TB_3_P_1", "set_4_P_1", "TB_4_P_1", "set_5_P_1", "TB_5_P_1")
+
+data10 <- data10 %>% select(!to_remove)
+
+#Preserve complete cases
+data11 <- data10[complete.cases(data10),]
+
+#Name the dataframe so we know which version to work with
+data_clean <- data11
+
+#We'll work with the compact data in longer format as well -- we will call it data_long
+remove_data7 <- c("ret", "tourney_date", "tourney_id", "tourney_name", "match_num", "minutes", "set_1", "TB_1", "set_2", "TB_2", "set_3", "TB_3", "set_4", "TB_4", "set_5", "TB_5", "id", "seed", "ioc", "score", "ace", "df", "svpt", "1stIn", "1stWon", "2ndWon", "SvGms", "bpSaved", "bpFaced", 
+"rank", "rank_points", "1", "2", "3", "4", "5", "set1", "set2", 
+"set3", "set4", "set5", "set_tot", "1st_made", "2ndIn", "2nd_made", 
+"1st_serve_perc_win", "2nd_serve_perc_win", "1st_serve_rating", 
+"2nd_serve_rating", "1st_effect", "return_perc_win", "point_dom", 
+"win_bp_perc", "bp_convert_perc", "bp_ratio", "setwon_perc", 
+"ptswon_perc", "pts2sets_op_ratio", "gameswon_perc", "gmstosets_op_ratio", 
+"bpwon_perc", "bp_op_ratio", "bp_saved_perc", "bp_saved_op_ratio", 
+"bp_convert_op_ratio", "ace_perc", "df_perc", "upset_scored", 
+"upset_against", "latest_elo", "delta_elo", "bof3_odds", "bo5_odds")
+
+data_long <- data7 %>% select(!remove_data7)
+
+
+#Let's look at some correlation plots 
+#We'll pick some basic variables for our correlation map
+#The variables all must be numeric 
+vars_corr <- c("Win_percent", "draw_size", "best_of", "rank_diff", "ht", "age", "minutes_av", "svpt_av", "1stIn_av", "1stWon_av", "2ndWon_av", "SvGms_av", 
+"bpSaved_av", "bpFaced_av", "1st_effect_av", "return_perc_win_av", "point_dom_av", "setwon_perc_av", "ptswon_perc_av", "gameswon_perc_av", "bpwon_perc_av", "bp_saved_perc_av", "ace_perc_av",  "df_perc_av", "latest_elo_av", "upset_scored_av")
+
+data_cor <- data_long[,vars_corr]
+
+#Make sure they're all numeric
+
+data_cor <- data_cor %>% mutate_at(colnames(data_cor), as.numeric)
+
+#Creating correlation plot
+#Unfortunately we have to exclude missing values, but there aren't many 
+data.cor <- cor(data_cor, use="pairwise.complete.obs")
+corrplot(data.cor)
+
+#We can get good insights from here, like the fact that the Points to Games Over-Performance Ratio, the Points to Sets Over-Performance Ratio, the Games to Sets Over-Performance Ratio and the average number of sets won are somewhat correlated as well as the Points Dominance Ratio and, obviously, the odds. We can tell bookies are doing a good job if they are the number-one feature in terms of correlation.
+
+#Correlation/pair plot
+ggplot(data_long, aes(x = point_dom_av, y = gmstosets_op_ratio_av, color = Win)) +
+  geom_jitter() +
+  geom_density2d() +
+  #facet_grid(. ~ Win) +
+  labs(title = "Pair Plot",
+       x = "point_dom_av",
+       y = "gmstosets_op_ratio_av") +
+  theme_minimal()
+
+data12 <- data_long %>% select(Win, point_dom_av, gmstosets_op_ratio_av, set_tot_av, pts2sets_op_ratio_av, gmstosets_op_ratio_av)
+data12$Win <- as.factor(data12$Win)
+data12 <- data12[complete.cases(data12),]
+
+ggpairs(data12, mapping = aes(color = Win), columns = c("point_dom_av", "gmstosets_op_ratio_av", "set_tot_av", "pts2sets_op_ratio_av"))
+
+```
+
+#Dummify categorical variables
+
+```{r}
+names(data_clean)
+
+#Rename variables
+data_clean <- data_clean %>% rename(surface = surface_P_1,
+                                    tourney_name = tourney_name_P_1,
+                                    minutes = minutes_P_1, 
+                                    rank_diff = rank_diff_P_1,
+                                    best_of = best_of_P_1,
+                                    draw_size = draw_size_P_1)
+
+#Identify categorical variables
+to_dummify <- c(
+  "surface",
+  "hand_P_1",
+  "hand_P_2",
+  "best_of")
+
+#Dummify our cols
+data_clean <- dummy_cols(data_clean, select_columns=to_dummify)
+
+#We will drop these identifiers for modeling but merge them back to dataset 
+identifiers <- c(
+  "tourney_id",
+  "match_num",
+  "id_P_1",
+  "id_P_2",
+  "name_P_1",
+  "name_P_2",
+  "tourney_name",
+  "Win_P_1"
+)
+
+#Drop additional variables
+to_drop <- c(
+  "tourney_date_P_1", #Variables that won't help the model
+  "tourney_level_P_1",
+  "draw_size",
+  "score_P_1",
+  "round_P_1",
+  "year_P_1",
+  "ret_P_1",
+  "ret_P_2",
+  "rank_P_1",
+  "rank_P_2",
+  "rank_points_P_1",
+  "rank_points_P_2",
+  "seed_P_1",
+  "seed_P_2",
+  "minutes",
+  "1st_made_P_1",  #Variables that can't be used in model prediction (won't have this info a priori)
+  "1st_made_P_2", 
+  "2ndIn_P_1", 
+  "2ndIn_P_2", 
+  "2nd_made_P_1", 
+  "2nd_made_P_2", 
+  "servewon_perc_total_P_1", 
+  "servewon_perc_total_P_2", 
+  "returnwon_perc_total_P_1", 
+  "returnwon_perc_total_P_2", 
+  "win_bp_perc_P_1", 
+  "win_bp_perc_P_2", 
+  "ptstogame_op_ratio_P_1", 
+  "ptstogame_op_ratio_P_2", 
+  "minutes_av_P_1",
+  "minutes_av_P_2",
+  "surface", #Our dummified variables
+  "hand_P_1",
+  "hand_P_2",
+  "best_of"
+)
+
+#Drop the vars
+data_clean <- data_clean %>% select(!to_drop)
+
+```
+
+#Remove identifiers and label into separate dataframe
+```{r}
+
+#This can be merged back to our dataset
+data_ids <- data_clean[identifiers]
+
+#Now drop from the training set
+data_train <- data_clean %>% select(!identifiers)
+
+#Let's export these files for our modeling RMD
+write.csv(data_ids, "/Users/mona/Desktop/Tennis_Analytics/tennis_EDA/data_ids.csv", row.names=FALSE)
+write.csv(data_train, "/Users/mona/Desktop/Tennis_Analytics/tennis_EDA/data_train.csv", row.names=FALSE)
+
+```
+
+
+#_________________________________________________________________________________________________________
+#Scale/transform variables
+```{r}
+
+#We will scale using the scale variable in R
+#https://stackoverflow.com/questions/49260862/trainable-sklearn-standardscaler-for-r
+
+data_x_train_scaled <- as.data.frame(scale(data_train))
+data_y_train <- as.data.frame(data_ids$Win_P_1)
+
+#It looks like after scaling we have two columns with missing values, so we will drop them for now 
+to_drop <- c("bp_ratio_av_P_1",
+             "bp_ratio_av_P_2")
+
+data_x_train_scaled <- data_x_train_scaled %>% select(!to_drop)
+
+```
+
+#Modeling
+
+```{r}
+#The outcome variable of interest is: data_ids$Win_P_1
+
+#We will build out the following models
+#1. Random forest (baseline)
+#2. Random forest feature importance + regression
+#3. Random forest feature importance + SVM
+#4. Random forest feature importance + XGBoost
+#5. PCA + regression
+#6. PCA + SVM
+#7. PCA + random forest
+#8. PCA + XGBoost
+#9. Shallow neural network 
+
+```
+
+#Model 1: Baseline Random forest in R 
+
+```{r}
+#Let's try a baseline RF model
+
+data_y_rf <- as.factor(data_ids$Win_P_1)
+rf <- randomForest(y=data_y_rf, 
+                   x=data_x_train_scaled, 
+                   proximity=TRUE,
+                   replace=TRUE,
+                   importance=TRUE) 
+
+print(rf)
+
+#Out of bag error is 12.58%, so the train data set model accuracy is around 87%.
+#500 trees, 10 variables at each split
+
+#Let's look at feature importance, i.e. the top 10 most important features
+head(rf$importance, 10)
+
+#We can see how it classifies each sample
+first <- as.data.frame(rf$votes)
+second <- data_y_train
+head(cbind(first, second), 10)
+tail(cbind(first, second), 10)
+
+#Visualizations
+plot(rf,
+     main="Random Forest Error Rate",
+     #xlab="Number of Trees",
+     #ylab="Error Rate", 
+     lwd=1.5,
+     panel.first={
+        axis(1, tck=1, col.ticks="light gray")
+        axis(1, tck=-0.015, col.ticks="black")
+        axis(2, tck=1, col.ticks="light gray", lwd.ticks="1")
+        axis(2, tck=-0.015)
+        minor.tick(nx=5, ny=2, tick.ratio=0.5)
+        box()
+ })
+
+#Tree size
+hist(treesize(rf),
+     main = "No. of Nodes for the Trees",
+     col = "green", 
+     xlab="Tree Size",
+     breaks=20, 
+     xlim=c(975, 1200))
+
+#Variable Importance
+varImpPlot(rf,
+           sort = T,
+           n.var = 10,
+           main = "Top 10 - Variable Importance")
+
+
+#Let's take the top 50 important variables, so that will cut our features in half  
+top20_featimp <- rownames(head(rf$importance, 20))
+
+```
+
+#Pre modeling PCA
+
+```{r}
+options(ggrepel.max.overlaps = Inf)
+
+#We have 104 variables
+#We will do PCA as an alternative for dimension reduction (other method was RF feature importance, picking top 50 important features)
+#We will use the top 20 components (just like for RF, we use the top 20 most important features)
+
+#R package for correlation analysis
+library(corrr)
+
+#Mainly used for multivariate exploratory data analysis; the factoMineR package gives access to the PCA module to perform principal component analysis. 
+library("FactoMineR")
+
+#This package provides all the relevant functions to visualize the outputs of the principal component analysis. These functions include but are not limited to scree plot, biplot, only to mention two of the visualization techniques covered later in the article.
+library("factoextra")
+
+#Create the correlation matrix
+corr_matrix <- cor(data_x_train_scaled)
+pca_data <- princomp(corr_matrix)
+summary(pca_data)
+plot(pca_data)
+
+pca_data <- princomp(na.omit(data_x_train_scaled))
+
+#We create 104 principal components
+#What are the loadings? Let's examine the first two components
+pca_data$loadings[,1:2]
+
+#Scree plot
+#This plot shows the eigenvalues in a downward curve, from highest to lowest. The first two components can be considered to be the most significant since they contain almost 70% of the total information of the data.
+fviz_eig(pca_data, addlabels = TRUE)
+
+#Biplot of attributes - let's just do the first 20 beacuse there's 104 components
+#With the biplot, it is possible to visualize the similarities and dissimilarities between the samples, and further shows the impact of each attribute on each of the principal components.
+#First, all the variables that are grouped together are positively correlated to each other
+#Then, the higher the distance between the variable and the origin, the better represented that variable is
+#Finally, variables that are negatively correlated are displayed to the opposite sides of the biplot’s origin. 
+fviz_pca_var(pca_data, 
+             col.var = "black",
+             select.var = list(cos2=20))
+
+#Another way of making the same plot
+fviz_pca_ind(pca_data,
+             col.ind = "cos2", 
+             pointsize = "cos2",
+             gradient.cols = c("#FFCCFF", "#CC0066", "#000000"),
+             repel = TRUE)
+
+#Contribution of each variable
+#The goal of this visualization is to determine how much each variable is represented in a given component. Such a quality of representation is called the Cos2 and corresponds to the square cosine, and it is computed using the fviz_cos2 function.
+fviz_cos2(pca_data, 
+          choice = "var", 
+          axes = 1)
+
+#Biplot combined with cos2 
+#The biplot and attributes importance can be combined to create a single biplot, where attributes with similar cos2 scores will have similar colors
+#From the biplot below:
+##High cos2 attributes are colored in green
+##Mid cos2 attributes have an orange color
+##Finally, low cos2 attributes have a black color 
+fviz_pca_var(pca_data, 
+             col.var = "cos2",
+             gradient.cols = c("black", "orange", "green"),
+             repel = TRUE, 
+             select.var = list(cos2=20))
+
+#Let's extract the top 20 PCA components for our models
+# Extract the results for variables and individuals
+top20_pca <- as.data.frame(pca_data$loadings[,1:20])
+
+
+```
+
+#Alternative PCA calculation
+
+```{r eval = FALSE}
+
+#Let's try a different PCA
+pca.out <- prcomp(data_x_train_scaled)
+
+#Biplot
+pca.var <- pca.out$sdev^2
+
+pve <- pca.var/sum(pca.var)
+
+plot(pve, 
+     xlab="Principal Component",
+     ylab="Proportion of Variance Explained", 
+     ylim=c(0, 1),
+     type="b")
+
+
+plot(cumsum(pve),
+     xlab="Principal Component",
+     ylab="Accumulative Prop. of Variance Explained",
+     ylim=c(0,1),
+     type="b")
+
+#Construct new data with the PCA selected components
+pca_lr_data <- data.frame(data_y_train, pca.out$x[,1:20])
+head(pca_lr_data)
+
+```
+
+#Model 5: PCA + logistic regression
+
+```{r}
+
+#To get the scores, we need to matrix multiply the loadings with the data 
+pca_matrix <- data.matrix(top20_pca)
+data_matrix <- data.matrix(data_x_train_scaled)
+pca_x_train <- data.frame(data_matrix %*% pca_matrix)
+
+data_y_train_lr <- data.matrix(data_y_train)
+pca_lr_model <- glm(data_y_train_lr ~ ., 
+                    data=pca_x_train, 
+                    family="binomial")
+
+
+summary(pca_lr_model)
+
+predicted_values <- as.data.frame(pca_lr_model$fitted.values)
+predicted_classes <- ifelse(predicted_values > 0.5, 1, 0)
+colnames(predicted_classes) <- "Predicted"
+
+
+training_preds_actual <- cbind(data_y_train, predicted_classes)
+colnames(training_preds_actual) <- c("Actual", "Predicted")
+
+Actual <- factor(c(0, 0, 1, 1))
+Predicted <- factor(c(0, 1, 0, 1))
+values <- table(training_preds_actual)[1:4]
+cf_data <- data.frame(Actual, Predicted, values)
+
+ggplot(cf_data =  training_preds_actual, mapping = aes(x = Actual, y = Predicted)) +
+  geom_tile(aes(fill = values), colour = "white") +
+  geom_text(aes(label = sprintf("%1.0f", values)), vjust = 1) +
+  scale_fill_gradient(low = "blue", high = "red") +
+  theme_bw() + theme(legend.position = "none") + 
+  ggtitle("PCA + LR: Confusion Matrix")
+
+
+confusion_matrix <- as.data.frame(table(training_preds_actual))
+
+ggplot(data = confusion_matrix,
+       mapping = aes(x = Actual,
+                     y = Predicted)) +
+  geom_tile(aes(fill = Freq)) +
+  geom_text(aes(label = sprintf("%1.0f", Freq)), vjust = 1) +
+  scale_fill_gradient(low = "blue",
+                      high = "red",
+                      trans = "log") + # if your results aren't quite as clear as the above example
+  ggtitle("PCA + LR: Confusion Matrix")
+
+#ROC curve
+test <- roc(data_y_train_lr, 
+            pca_lr_model$fitted.values, 
+            auc=TRUE, 
+            ci=TRUE, 
+            ci.type="bars",
+            plot=TRUE, 
+            grid=TRUE, 
+            percent=TRUE, 
+            boot.n=100, 
+            ci.alpha=0.9, 
+            stratified=FALSE,
+            show.thres=TRUE, 
+            legacy.axes=TRUE,
+            reuse.auc=TRUE, 
+            print.auc=TRUE,
+            print.thres.col="blue",
+            print.thres.cex=0.7,
+            main="PCA + LR: ROC Curve")
+
+#Another way
+ggplot(training_preds_actual, aes(d = Actual, m = Predicted)) + 
+  geom_roc(n.cuts = 0)
+
+```
+
+#Model 9: Shallow neural net
+```{r}
+
+nn <- neuralnet(w~f.wins+f.losses+f.gp+f.percent+s.wins+s.losses+s.gp+s.percent,data=train,hidden=c(5),linear.output=F,err.fct = j)
+pr.nn <- neuralnet::compute(nn,subset(test,select=c(2,3,4,5,7,8,9,10)))
+pred.results <- ifelse(pr.nn$net.result > 0.5,1,0)
+MSE.nn <- sum((test$w-pred.results)^2)/nrow(test)
+for (i in 1:length(pr.nn$net.result)){
+  if (pr.nn$net.result[i]>.99999){
+    pr.nn$net.result[i]=.999999
+  }
+  if (pr.nn$net.result[i]<.000001){
+    pr.nn$net.result[i]=.000001
+  }
+}
+tw<-as.matrix(test$w)
+ce <- (-1)*(t(tw) %*% log(pr.nn$net.result) + t(1-tw)%*%log(1-pr.nn$net.result))
+
+MSE.nn
+ce
+
+```
+
+
+#Code references
+```{r}
+
+#Good code
+#https://www.kaggle.com/code/sadz2201/tennis-exploration-atpboost
+#https://www.kaggle.com/code/jedipro/atp-men-s-tour-predictive-model-with-xgboost/script
+#https://github.com/BrandoPolistirolo/Tennis-Betting-ML/blob/main/Training.py
+#https://github.com/polmarin/Data-Analysis-Tennis/blob/main/Portfolio%20Project.ipynb <-- THIS IS THE WAY
+#https://github.com/VincentAuriau/Tennis-Prediction/blob/master/python/evaluation/train_test.py
+#https://github.com/jugalm/predicting-wimbledon-matches/blob/master/nn_model.ipynb
+#https://github.com/MareoRaft/tennis/tree/master/frontend
+#https://github.com/shukkkur/Tennis-Match-Prediction/blob/main/ModelsAndPredictions.ipynb
+#https://github.com/chief-r0cka/MLT/blob/master/Eda-data-prep-modeling-predictions-then-betting.ipynb
+#https://github.com/andmon97/ATPTennisMatchPredictions/blob/main/ML_tennis.pdf <-- THIS ONE IS DECENT, the accompanying paper is helpful 
+
+#https://github.com/edouardthom/ATPBetting/blob/master/Beating%20the%20bookmakers%20on%20tennis%20matches.ipynb
+#https://github.com/molson194/Tennis-Betting-ML/blob/master/train.py
+#https://github.com/rajdua22/tennis_betting
+#https://github.com/chief-r0cka/MLT/blob/master/Eda-data-prep-modeling-predictions-then-betting.ipynb <-- THIS IS INTERESTING LOOKING AT BETTING SITES
+
+#https://hub.docker.com/r/mcekovic/uts-database
+#https://github.com/mcekovic/tennis-crystal-ball/issues 
+
+
+#Resources I've reviewed
+#https://github.com/johncookds/Predicting-Tennis-Matches/blob/master/MLFinalpaper.Rmd
+#https://www.ultimatetennisstatistics.com/glossary
+#https://github.com/polmarin/Data-Analysis-Tennis/blob/main/Portfolio%20Project.ipynb
+
+```
+
+#Test set 
+```{r}
+#Our test set will be 2023 matches thus far 
+
+```
+
+##Other questions to consider or explore 
+```{r}
+
+#How often in best of 5 does the winner of first set lose
+#1. Create variable for each set's winner and loser
+
+#How often does someone come back from being match point down and then go on to win the match 
+
+#How often does someone serve below 50% and still win the match 
+
+#How many times does someone have more errors and still win
+#More errors that winners or more errors than their opponent?
+
+#How many times someone hasn’t dropped a single set and then gone on to win the slam 
+```
+
