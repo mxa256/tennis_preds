@@ -44,8 +44,8 @@ library(plotROC)
 #Load data
 ```{r}
 #Import our csv files created in our data prep RMD
-data_ids <- read.csv("/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_EDA/data_ids.csv")
-data_train <- read.csv("/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_EDA/data_train.csv")
+data_ids <- read.csv("/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/data_ids.csv")
+data_train <- read.csv("/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/data_train.csv")
 
 ```
 
@@ -325,7 +325,7 @@ table(predicted=rf_svm_radial$fitted,actual=data_train_rf_svm$y)
 #In the plot, points that are represented by an “X” are the support vectors, or the points that directly affect the classification line. The points marked with an “o” are the other points, which don’t affect the calculation of the line. 
 #Principal component 1 on x axis and component 2 on y axis
 
-#Get our training set predictions for confusion matrix and ROC curve
+#Get our test set predictions for confusion matrix and ROC curve
 rf_svm_radial_test_preds <- predict(rf_svm_radial, X_test_rf, probability=TRUE)
 rf_svm_radial_test_preds <- as.data.frame(attr(rf_svm_radial_test_preds, "probabilities"))
 colnames(rf_svm_radial_test_preds) <- c("Lose", "Win")
