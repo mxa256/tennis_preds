@@ -33,7 +33,7 @@ library(randomForest)
 #Read in data
 ```{r}
 
-filepath_matches <- "/Users/mona/Desktop/Tennis_Analytics/tennis_atp-master/atp_matches_"
+filepath_matches <- "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_atp-master/atp_matches_"
 
 #data <- read.csv(filepath)
 
@@ -53,7 +53,7 @@ for (i in 1:length(list_files)){
 remove(yearly_data)
 
 #Load player data 
-filepath_players <- "/Users/mona/Desktop/Tennis_Analytics/tennis_atp-master/atp_players.csv"
+filepath_players <- "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_atp-master/atp_players.csv"
 players <- read.csv(filepath_players)
 
 ```
@@ -1493,8 +1493,8 @@ data_ids <- data_clean[identifiers]
 data_train <- data_clean %>% select(!identifiers)
 
 #Let's export these files for our modeling RMD
-write.csv(data_ids, "/Users/mona/Desktop/Tennis_Analytics/tennis_EDA/data_ids.csv", row.names=FALSE)
-write.csv(data_train, "/Users/mona/Desktop/Tennis_Analytics/tennis_EDA/data_train.csv", row.names=FALSE)
+write.csv(data_ids, "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/data_ids.csv", row.names=FALSE)
+write.csv(data_train, "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/data_train.csv", row.names=FALSE)
 
 ```
 
@@ -1830,12 +1830,6 @@ ce
 #https://github.com/johncookds/Predicting-Tennis-Matches/blob/master/MLFinalpaper.Rmd
 #https://www.ultimatetennisstatistics.com/glossary
 #https://github.com/polmarin/Data-Analysis-Tennis/blob/main/Portfolio%20Project.ipynb
-
-```
-
-#Test set 
-```{r}
-#Our test set will be 2023 matches thus far 
 
 ```
 
