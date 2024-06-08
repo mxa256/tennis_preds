@@ -1,0 +1,792 @@
+---
+title: "Preprocessing"
+output: html_document
+date: "2024-06-05"
+---
+#Load packages necessary for preprocessing
+```{r}
+#Tidy package
+library(dplyr)
+library(tidyverse)
+
+#Missing values package 
+library(naniar)
+```
+
+#Read it in 
+```{r}
+filepath <- "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_atp-master/atp_matches_2023.csv"
+data <- read.csv(filepath)
+```
+
+#Remove exhibition matches
+```{r}
+data <- data %>% filter(tourney_name != "NextGen Finals")
+data <- data %>% filter(tourney_name != "Laver Cup")
+```
+
+#Missing value imputation
+```{r}
+#Drop the winner_entry and loser_entry columns because of many missing values and little value added
+data <- data %>% select(-c("winner_entry", "loser_entry"))
+
+#Missing data for winner seed and loser seed
+data$winner_seed <- replace(data$winner_seed, is.na(data$winner_seed), 0)
+data$loser_seed <- replace(data$loser_seed, is.na(data$loser_seed), 0)
+
+#Heights
+missing_winner_heights <- data %>% select(winner_name, winner_ht) %>% filter(is.na(winner_ht) == T)
+missing_winner_heights <- unique(missing_winner_heights$winner_name)
+
+missing_loser_heights <- data %>% select(loser_name, loser_ht) %>% filter(is.na(loser_ht) == T)
+missing_loser_heights <- unique(missing_loser_heights$loser_name)
+
+missing_all_heights <- c(missing_winner_heights, missing_loser_heights)
+missing_all_heights <- sort(unique(missing_all_heights))
+
+#We can only impute heights we have previously, and will drop players who do not have height recorded
+dict = list(
+"Adolfo Daniel Vallejo"= 183,
+"Ainius Sabaliauskas" = 191,
+"Aissa Benchakroun" = 203,
+"Alan Fernando Rubio Fierros" = 175,
+"Alastair Gray"= 188,
+"Alberto Emmanuel Alvarado Larin" = NA,
+"Alberto Lim" = NA,
+"Aleksandar Kovacevic" = 183,
+"Aleksandre Bakshi" = 180,
+"Alen Avidzba" = 188, 
+"Alex Diaz" = 188,
+"Alex Fairbanks" = NA,
+"Alexander Ritschard" = 193,
+"Alexander Shevchenko" = 185,
+"Alexander Zgirovsky" = 191,
+"Alexis Galarneau" = 180,
+"Alexis Klegou" = 188,
+"Amer Naow" = NA,
+"Amir Hossein Badi" = NA,
+"Amr Elsayed Abdou Ahmed Mohamed" = NA,
+"Andrea Basso" = 185,
+"Andrej Nedic" = NA,
+"Andres Martin" = 183, 
+"Anthony Jackie Tang" = 183, 
+"Anthony Susanto" = NA,
+"Ari Fahresi" = NA,
+"Aristotelis Thanos" =  NA,
+"Ayed Zatar" = 200,
+"Aleksandar Vukic"= 188,
+"Alexandar Lazarov"= 191,
+"Alexander Erler"= 193,
+"Alibek Kachmazov"= 185,
+"Altug Celikbilek"= 183,
+"Aqeel Khan"= NA,
+"Arthur Cazaux"= 183,
+"Arthur Rinderknech"= 196,
+"August Holmgren"= 188,
+"Aziz Dougaz"= 188,
+"Aziz Ouakaa"= NA,
+
+
+"Beibit Zhukayev"=196, 
+"Ben Shelton"=193, 
+"Bogdan Borza"=185, 
+"Bor Artnak" = NA, 
+"Brandon Holt"=185, 
+"Brandon Perez" = 191, 
+"Brian Shi"=NA, 
+"Bu Yunchaokete"= 183, 
+
+
+
+"Caleb Chakravarthi"=188, 
+"Camilo Ugo Carabelli"=185, 
+"Carlos Gimeno Valero"=191, 
+"Cesar Cruz"=NA, 
+"Chak Lam Coleman Wong"=191, 
+"Cheng Yu Yu"=188, 
+"Ching Lam"=NA, 
+"Christian Sigsgaard"=193, 
+"Christoffer Konigsfeldt"=188, 
+"Christophe Tholl"=NA, 
+"Christopher Diaz Figueroa"=175, 
+"Chun Hun Wong"=170, 
+"Cole Gromley"=185, 
+"Coleman Wong"=191,
+
+
+"Daniel Cukierman"=NA, 
+"Daniels Tens"=NA, 
+"Daniil Ostapenkov"=NA, 
+"Darko Bojanovic"=180, 
+"David Agung Susanto"=NA, 
+"David Souto"=191, 
+"David Szintai"=NA, 
+"Delmas Ntcha"=NA, 
+"Diego Fernandez Flores"=185, 
+"Dimitri Badra"=NA, 
+"Dino Prizmic"=188, 
+"Dragos Nicolae Madaras"=191, 
+"Duilio Beretta"=178, 
+"Dzmitry Zhyrmont"=188,
+
+"Edas Butvilas"=191, 
+"Edgars Manusis"=NA, 
+"Edris Fetisleam"=NA, 
+"Eduardo Nava"=180, 
+"Eero Vasa"=188, 
+"Elmer Moller"=183, 
+"Eric Jr. Olivarez"=178, 
+"Erik Arutiunian"=NA, 
+"Evan Furness"=173, 
+"Evgenii Tiurnev"=191,
+
+
+"Facundo Mena"=183, 
+"Filip Misolic"=180, 
+"Finn Reynolds"=NA, 
+"Fitriadi M Rifqi"=NA, 
+"Flavio Cobolli"=NA, 
+"Francesco Maestrelli"=196, 
+"Francesco Passaro"=180, 
+"Franco Agamenone"=191, 
+"Franz Luna Lavidalie"=NA,
+
+
+"Gabi Adrian Boitan"=185, 
+"Gabriel Diallo"=203, 
+"Gabriel Donev"=180, 
+"Gijs Brouwer"=191, 
+"Gilles Arnaud Bailly"=180, 
+"Gonzalo Villanueva"=175, 
+"Gunawan Trismuwantara"=NA, 
+
+
+"Hady Habib"= 188,
+"Hasan Ibrahim"=NA, 
+"Haydn Lewis"=NA, 
+"Hazem Naw"=183, 
+"Henri Squire"=196, 
+"Hernan Casanova"=178, 
+"Hernando Jose Escurra Isnardi"=NA, 
+"Hong Kit Jack Wong"=NA, 
+"Hugo Nys"=185, 
+
+"Ignacio Garcia"=178, 
+"Isaac Becroft"=178, 
+"Ismael Changawa Ruwa Mzai"=NA, 
+"Ivan Endara"=179, 
+"Ivan Gakhov"=191,
+
+
+"Jabor Al Mutawa"=180, 
+"Jack Mingjie Lin"=178, 
+"Jad Ballout"=NA, 
+"Jan Zielinski"=180, 
+"Jeson Patrombon"=NA, 
+"Jesper De Jong"=180, 
+"Jirat Navasirisomboon"=175, 
+"Johannes Ingildsen"=193, 
+"John Bryan Decasa Otico"=NA, 
+"Jordi Munoz Abreu"=NA, 
+"Jordi Samper Montana"=NA, 
+"Jorge Brian Panta Herreros"=NA, 
+"Juan Alejandro Hernandez Serrano"=175, 
+"Juan Borba"=NA, 
+"Juan Lugo"=178, 
+"Julian Saborio"=185, 
+"Juncheng Shang"=180, 
+"Jurabek Karimov"=191, 
+"Justin Barki"=NA, 
+
+
+"Kaipo Marshall"=191, 
+"Karlis Ozolins"=193, 
+"Kasidit Samrej"=NA, 
+"Kenneth Raisma"=193, 
+"Kevin Cheruiyot"=NA, 
+"Ki Lung Ng"=175, 
+"Kiranpal Pannu"=185, 
+"Kuan Yi Lee"=178, 
+"Kyle Johnson"=196,
+
+
+"Learner Tien"=180, 
+"Lleyton Cronje"=188, 
+"Lluis Miralles"=191, 
+"Luca Van Assche"=178, 
+"Lucky Candra Kurniawan"=NA, 
+"Luis Carlos Alvarez Valdes"=178, 
+"Luis David Martinez"=178, 
+"Luis Diego Chavez Villalpando"=NA, 
+
+
+"M Abid Ali Khan Akbar"=NA, 
+"Maks Kasnikowski"=178, 
+"Manuel Guinard"=198, 
+"Mark Chigaazira"=183, 
+"Mark Lajal"=188, 
+"Martin Antonio Vergara Del Puerto"=NA, 
+"Matic Kriznik"=NA, 
+"Matthew Foster Estwick"=NA, 
+"Mattias Siimar"=NA, 
+"Max Hans Rehberg"=183, 
+"Menelaos Efstathiou"=183, 
+"Michael Bassem Sobhy"=NA, 
+"Michel Saade"=NA, 
+"Mili Poljicak"=185, 
+"Minjong Park"=NA, 
+"Mohsen Hossein Zade"=NA, 
+"Mubarak Shannan Zayid"=NA, 
+"Muhammad Althaf Dhaifullah"=NA, 
+"Muhammad Shoaib"=NA, 
+"Muzammil Murtaza"=NA, 
+
+"N Sriram Balaji"=183, 
+"Nam Hoang Ly"=175, 
+"Nathan Anthony Barki"=178, 
+"Nicholas David Ionel"=183, 
+"Nick Chappell"=178, 
+"Nicolaas Scholtz"=NA, 
+"Nikoloz Davlianidze"=NA,
+
+"Olaf Pieczkowski"=183,
+
+"Pak Long Yeung"=NA, 
+"Palaphoom Kovapitukted"=178, 
+"Peter August Anker"=NA, 
+"Peter Bothwell"=175, 
+"Philip Henning"=183, 
+"Phuong Van Nguyen"=175, 
+
+
+"Rafael Eduardo Gonzalez Retana"=NA, 
+"Rigele Te"=188, 
+"Rinky Hijikata"=178, 
+"Rio Noguchi"=168, 
+"Rodrigo Arus"=193, 
+"Rodrigo Crespo Piedra"=NA, 
+"Rodrigo Pacheco Mendez"=191, 
+"Roey Tabet"=NA, 
+"Roman Hassanov"=NA, 
+"Rowland Phillips"=NA, 
+"Ryan Peniston"=183, 
+
+
+"Santiago Fa Rodriguez Taverna"=191, 
+"Scott Griekspoor"=188, 
+"Sebastian Arcila"=NA, 
+"Sebastian Dominguez"=175, 
+"Sebastian Dominko"=NA, 
+"Seong Chan Hong"=175, 
+"Sergey Fomin"=180, 
+"Shahin Khaledan"=NA, 
+"Sharmal Dissanayake"=NA, 
+"Sheil Kotecha"=NA, 
+"Shintaro Mochizuki"=NA, 
+"Sho Shimabukuro"=183, 
+"Siim Troost"=NA, 
+"Simen Sunde Bratholm"=NA, 
+"Simon Carr"=183, 
+"Skander Mansouri"=193, 
+"Skyler Butts"=178, 
+"Soren Hess Olesen"=188, 
+"Soufiane El Mesbahi"=183, 
+"Stylianos Christodoulou"=NA, 
+"Sylvestre Monnou"=NA,
+
+
+"Takanyi Garanganga"=185, 
+"Tegar Abdi Satrio Wibowo"=NA, 
+"Thabo Ncube"=180, 
+"Thehan Sanjaya Wijemanne"=NA, 
+
+
+"Valentin Vacherot"=193, 
+"Viacheslav Bielinskyi"=NA,
+"Vilius Gaubas"= NA,
+"Vladimir Ivanov"=NA, 
+"Vladyslav Orlov"=188,
+
+
+"Wai Yu Kai"=NA, 
+"William Blumberg"=188,
+
+"Xavier Lawrence"=188, 
+"Yanki Erel"=178, 
+"Yasitha De Silva"=NA, 
+"Yassir Kilani"=175, 
+"Yunseong Chung"=178, 
+"Yuttana Charoenphon"=178)
+
+dict <- dict %>% as_tibble() 
+heights_df <- pivot_longer(dict, cols = everything())
+colnames(heights_df) <- c("Name", "Height")
+
+#Fill in the missing winner heights
+data <- left_join(data, heights_df, by = c("winner_name" = "Name"))
+data$winner_ht <- dplyr::coalesce(data$winner_ht, data$Height)
+
+#Fill in the missing loser heights
+data <- left_join(data, heights_df, by = c("loser_name" = "Name"), suffix = c("_orig", "_dupe"))
+data$loser_ht <- dplyr::coalesce(data$loser_ht, data$Height_dupe)
+
+#Let's check - still have some missing values
+table(is.na(data$winner_ht))
+table(is.na(data$loser_ht))
+
+#Drop the Height_orig and Height_dupe vars since we don't need them anymore
+data <- select(data, -c("Height_orig", "Height_dupe"))
+
+#Filter out people who still have height missing
+data <- data %>% filter(!is.na(winner_ht))
+data <- data %>% filter(!is.na(loser_ht))
+
+```
+
+#Additional clean up and feature extraction
+```{r}
+#Make a variable for matches that were walked over or retired
+data$ret <- ifelse(data$score == "W/O" | grepl("RET", data$score), "Yes", "No")
+
+#Let's keep complete cases only 
+data <- data[complete.cases(data),]
+
+#Extract score
+data$score_full <- data$score
+data <- separate(data, score_full, into = c("set_1", "set_2", "set_3", "set_4", "set_5"), sep = " ")
+
+data <- data %>% replace_with_na(replace = list(set_1 = c("RET", "W/O"), set_2 = "RET", set_3 = "RET", set_4 = "RET", set_5 = "RET"))
+
+#This function returns 1 if the winner won the set and 0 if the loser won the set -- only works for sets 1-4 
+winner_set <- function(x){
+  case_when(as.integer(substr(data[[x]], 1, 1)) > as.integer(substr(data[[x]], 3, 3)) ~ 1,
+            as.integer(substr(data[[x]], 1, 1)) < as.integer(substr(data[[x]], 3, 3)) ~ 0)
+}
+
+#This function returns 1 if the loser won the set and 0 if the winner won the set -- only works for sets 1-4
+loser_set <- function(x){
+  case_when(as.integer(substr(data[[x]], 1, 1)) < as.integer(substr(data[[x]], 3, 3)) ~ 1,
+            as.integer(substr(data[[x]], 1, 1)) > as.integer(substr(data[[x]], 3, 3)) ~ 0)
+}
+
+
+#Binary variable that indicates which player won which set and how many sets total were won
+data <- data %>% mutate(w_set1 = winner_set('set_1'),
+                          w_set2 = winner_set('set_2'),
+                          w_set3 = winner_set('set_3'),
+                          w_set4 = winner_set('set_4'),
+                          #w_set5 = winner_set('set_5'),
+                          l_set1 = loser_set('set_1'),
+                          l_set2 = loser_set('set_2'),
+                          l_set3 = loser_set('set_3'),
+                          l_set4 = loser_set('set_4'),
+                          #l_set5 = loser_set('set_5'),
+                          )
+
+#The fifth set is tricky because there is special scoring at slams, as sets must be won by two 
+#We know that the winner of the fifth set wins the match, so we can just code it as the winner
+data$w_set5 <- ifelse(is.na(data$set_5) == F & data$ret == "No", 1, NA)
+data$l_set5 <- ifelse(is.na(data$set_5) == F & data$ret == "No", 0, NA)
+
+#We'll imputate the missing with 0's
+data <- data %>% mutate(w_set1 = ifelse(is.na(w_set1), 0, w_set1),
+                          w_set2 = ifelse(is.na(w_set2), 0, w_set2),
+                          w_set3 = ifelse(is.na(w_set3), 0, w_set3),
+                          w_set4 = ifelse(is.na(w_set4), 0, w_set4),
+                          w_set5 = ifelse(is.na(w_set5), 0, w_set5),
+                          l_set1 = ifelse(is.na(l_set1), 0, l_set1),
+                          l_set2 = ifelse(is.na(l_set2), 0, l_set2),
+                          l_set3 = ifelse(is.na(l_set3), 0, l_set3),
+                          l_set4 = ifelse(is.na(l_set4), 0, l_set4),
+                          l_set5 = ifelse(is.na(l_set5), 0, l_set5)
+                          )
+
+#Calculate the total sets won during the match 
+data <- data %>% rowwise() %>% mutate(w_set_tot = sum(w_set1, w_set2, w_set3, w_set4, w_set5, na.rm=T),
+                                        l_set_tot = sum(l_set1, l_set2, l_set3, l_set4, l_set5, na.rm=T))
+
+      
+#Feature creation - refer to documentation for definitions 
+data$w_1st_made <- data$w_1stIn/data$w_svpt
+data$l_1st_made <- data$l_1stIn/data$l_svpt
+
+data$w_2ndIn <- (data$w_svpt - data$w_1stIn - data$w_df)
+data$l_2ndIn <- (data$l_svpt - data$l_1stIn - data$l_df)
+data$w_2nd_made <- data$w_2ndIn/(data$w_svpt - data$w_1stIn)
+data$l_2nd_made <- data$l_2ndIn/(data$l_svpt - data$l_1stIn)
+  
+data$w_1st_serve_perc_win <- data$w_1stWon/data$w_svpt
+data$l_1st_serve_perc_win <- data$l_1stWon/data$l_svpt
+
+data$w_2nd_serve_perc_win <- data$w_2ndWon/(data$w_svpt - data$w_1stIn)
+data$l_2nd_serve_perc_win <- data$l_2ndWon/(data$l_svpt - data$l_1stIn)
+
+data$w_1st_serve_rating <- round((data$w_1st_made*100)*data$w_1st_serve_perc_win, 1)
+data$l_1st_serve_rating <- round((data$l_1st_made*100)*data$l_1st_serve_perc_win, 1)
+
+data$w_2nd_serve_rating <- round((data$w_2nd_made*100)*data$w_2nd_serve_perc_win, 1)
+data$l_2nd_serve_rating <- round((data$l_2nd_made*100)*data$l_2nd_serve_perc_win, 1)
+
+data$w_1st_effect <- data$w_1st_serve_perc_win/data$w_2nd_serve_perc_win
+data$l_1st_effect <- data$l_1st_serve_perc_win/data$l_2nd_serve_perc_win
+
+data$w_return_perc_win <- ((data$l_1stIn - data$l_1stWon) + ((data$l_svpt-data$l_1stIn) - data$l_2ndWon - data$l_df))/data$l_svpt
+
+data$l_return_perc_win <- ((data$w_1stIn - data$w_1stWon) + ((data$w_svpt-data$w_1stIn) - data$w_2ndWon - data$w_df))/data$w_svpt
+
+data$w_servewon_perc_total <- (data$w_1stWon+data$w_2ndWon) / data$w_svpt
+data$w_returnwon_perc_total <- 1 - data$w_servewon_perc_total
+
+data$l_servewon_perc_total <- (data$l_1stWon+data$l_2ndWon) / data$l_svpt
+data$l_returnwon_perc_total <- 1 - data$l_servewon_perc_total
+
+data$w_point_dom <- data$w_returnwon_perc_total/data$l_returnwon_perc_total
+data$l_point_dom <- data$l_returnwon_perc_total/data$w_returnwon_perc_total
+
+data$w_win_bp_perc <- data$w_bpSaved/data$w_bpFaced
+data$l_win_bp_perc <- data$l_bpSaved/data$l_bpFaced
+
+data$w_bp_convert_perc <- (data$l_bpFaced - data$l_bpSaved)/data$l_bpFaced
+data$l_bp_convert_perc <- (data$w_bpFaced - data$w_bpSaved)/data$w_bpFaced
+
+data$w_bp_ratio <- data$w_bp_convert_perc / data$l_bp_convert_perc
+data$l_bp_ratio <- data$l_bp_convert_perc / data$w_bp_convert_perc
+
+data$rank_diff <- data$winner_rank - data$loser_rank
+
+data$w_setwon_perc <- data$w_set_tot / (data$w_set_tot + data$l_set_tot)
+data$w_ptswon_perc <- (data$w_1stWon + data$w_2ndWon + data$l_1stIn - data$l_2ndWon + (data$l_svpt - data$l_1stIn) - data$l_2ndWon)/(data$w_svpt + data$l_svpt)
+data$w_pts2sets_op_ratio <- data$w_setwon_perc/data$w_ptswon_perc
+
+data$l_setwon_perc <- data$l_set_tot / (data$l_set_tot + data$w_set_tot)
+data$l_ptswon_perc <- (data$l_1stWon + data$l_2ndWon + data$w_1stIn - data$w_2ndWon + (data$w_svpt - data$w_1stIn) - data$w_2ndWon)/(data$l_svpt + data$w_svpt)
+data$l_pts2sets_op_ratio <- data$l_setwon_perc/data$l_ptswon_perc
+
+set_separator <- function(x){
+  data <- separate(data, x, into=c("w_1", "l_1", "TB_1"), sep=c("-|\\("))
+}
+
+data <- separate(data, set_1, into=c("w_1", "l_1", "TB_1"), sep=c("-|\\("), remove = FALSE)
+data <- separate(data, set_2, into=c("w_2", "l_2", "TB_2"), sep=c("-|\\("), remove = FALSE)
+data <- separate(data, set_3, into=c("w_3", "l_3", "TB_3"), sep=c("-|\\("), remove = FALSE)
+data <- separate(data, set_4, into=c("w_4", "l_4", "TB_4"), sep=c("-|\\("), remove = FALSE)
+data <- separate(data, set_5, into=c("w_5", "l_5", "TB_5"), sep=c("-|\\("), remove = FALSE)
+
+
+data <- data %>% mutate_at(c("w_1", "l_1","w_2", "l_2", "w_3", "l_3", "w_4", "l_4","w_5", "l_5"), as.numeric)
+
+data$w_gameswon_perc <- sum(data$w_1 + data$w_2 + data$w_3 + data$w_4 + data$w_5, na.rm = T)/sum(data$w_1 + data$w_2 + data$w_3 + data$w_4 + data$w_5 + data$l_1 + data$l_2 + data$l_3 + data$l_4 + data$l_5, na.rm = T)
+
+data$l_gameswon_perc <- sum(data$l_1 + data$l_2 + data$l_3 + data$l_4 + data$l_5, na.rm = T)/sum(data$w_1 + data$w_2 + data$w_3 + data$w_4 + data$w_5 + data$l_1 + data$l_2 + data$l_3 + data$l_4 + data$l_5, na.rm = T)
+
+data$w_gmstosets_op_ratio <- data$w_setwon_perc/data$w_gameswon_perc
+data$l_gmstosets_op_ratio <- data$l_setwon_perc/data$l_gameswon_perc
+
+data$w_ptstogame_op_ratio <- data$w_gameswon_perc/data$w_ptswon_perc
+data$l_ptstogame_op_ratio <- data$l_gameswon_perc/data$l_ptswon_perc
+
+data$w_bpwon_perc <- (data$l_bpFaced - data$l_bpSaved + data$w_bpSaved)/(data$w_bpFaced + data$l_bpFaced)
+data$w_bp_op_ratio <- data$w_win_bp_perc / data$w_ptswon_perc
+
+data$l_bpwon_perc <- (data$w_bpFaced - data$w_bpSaved + data$l_bpSaved)/(data$l_bpFaced + data$w_bpFaced)
+data$l_bp_op_ratio <- data$l_win_bp_perc / data$l_ptswon_perc
+
+data$w_bp_saved_perc <- data$w_bpSaved / data$w_bpFaced
+data$w_bp_saved_op_ratio <- data$w_bp_saved_perc / data$w_servewon_perc_total
+
+data$l_bp_saved_perc <- data$l_bpSaved / data$l_bpFaced
+data$l_bp_saved_op_ratio <- data$l_bp_saved_perc / data$l_servewon_perc_total
+
+data$w_bp_convert_op_ratio <- data$w_bp_convert_perc / data$w_returnwon_perc_total
+data$l_bp_convert_op_ratio <- data$l_bp_convert_perc / data$l_returnwon_perc_total
+
+data$w_ace_perc <- data$w_ace/data$w_svpt
+data$l_ace_perc <- data$l_ace/data$l_svpt
+
+data$w_df_perc <- data$w_df/data$w_svpt
+data$l_df_perc <- data$l_df/data$l_svpt
+
+```
+
+#Adding prefixes to columns
+```{r}
+#Before we continue, we have to add the prefix of the column names to p1 and p2 
+#We will shuffle and split the dataset 50/50 because we want p1 to be the winner half of the time 
+#In each 50/50 split, we make a variable that is binary, indicating if P1 won (1 if p1 won, 0 if p1 lost)
+#We will then merge the datasets back together 
+
+#Shuffle the dataset
+data <- data[sample(nrow(data)),]
+
+#Shuffle and split 50/50
+split = sort(sample(nrow(data), nrow(data)*.5))
+top_half <- data[split,]
+bottom_half <- data[-split,]
+
+#Create new column prefix -- half the time winner will be p1, other half, winner will be p2
+names(top_half) <- sub('^w_', 'p1_', names(top_half))
+names(top_half) <- sub('^winner_', 'p1_', names(top_half))
+names(top_half) <- sub('^l_', 'p2_', names(top_half))
+names(top_half) <- sub('^loser_', 'p2_', names(top_half))
+
+names(bottom_half) <- sub('^w_', 'p2_', names(bottom_half))
+names(bottom_half) <- sub('^winner_', 'p2_', names(bottom_half))
+names(bottom_half) <- sub('^l_', 'p1_', names(bottom_half))
+names(bottom_half) <- sub('^loser_', 'p1_', names(bottom_half))
+
+#Create a new variable indicating if p1 won the match or not
+top_half$p1_won <- 1
+bottom_half$p1_won <- 0 
+
+#Merging them back together
+data <- rbind(top_half, bottom_half)
+
+#Indicating if an upset happened 
+data$p1_upset_scored <- ifelse(data$p1_rank < data$p2_rank & data$p1_won == 1, 1, 0)
+data$p2_upset_scored <- ifelse(data$p2_rank < data$p1_rank & data$p1_won == 0, 1, 0)
+data$p1_upset_against <- data$p2_upset_scored
+data$p2_upset_against <- data$p1_upset_scored
+
+#Filter out matches where the player retired
+data <- data %>% filter(ret == "No")
+
+#Can skip elo rating because this calculation takes time and it was not a selected feature from RF 
+```
+
+#Calculate rolling averages
+```{r}
+p1 <- names(data)[grepl("p1_", names(data)) & names(data) != "p1_won"]
+p2 <- names(data)[grepl("p2_", names(data))]
+info <- names(data)[!grepl("p1_", names(data)) & !grepl("p2_", names(data))]
+
+#Create new column names
+new_cols <- c("Win", info, substr(p1, 4, nchar(p1)), "player")
+
+# Initialize an empty list
+l <- list()
+
+#Transform to long format
+#Two rows per match, one per each player
+for (i in 1:nrow(data)) {
+  l <- c(l, list(c(data[i, "p1_won"], data[i, c(info, p1)])))
+  l <- c(l, list(c(abs(1 - data[i, "p1_won"]), data[i, c(info, p2)])))
+}
+
+# Create a new data frame from the list with the updated column names
+data <- as.data.frame(do.call(rbind, l))
+rows_split <- nrow(data)/2
+
+data_tophalf <- data[1:(rows_split-1),]
+data_bottomhalf <- data[rows_split:nrow(data),]
+
+data_tophalf$player <- ifelse(data_tophalf$p1_won==1, "P_1", "P_2")
+data_bottomhalf$player <- ifelse(data_bottomhalf$p1_won==1, "P_2", "P_1")
+
+data_tophalf <- as.data.frame(lapply(data_tophalf, unlist, use.names=TRUE))
+data_bottomhalf <- as.data.frame(lapply(data_bottomhalf, unlist, use.names=TRUE))
+
+data <- rbind(data_tophalf, data_bottomhalf)
+
+colnames(data) <- new_cols
+
+#Check duplicates 
+duplicates <- data %>% dplyr::group_by(tourney_id, match_num, player) %>% dplyr::summarise(n = dplyr::n(), .groups = "drop") %>% dplyr::filter(n > 1L)
+
+# Create the "Win%" column
+data$Win_percent <- data$Win
+data <- as.data.frame(lapply(data, unlist, use.names=TRUE))
+colnames(data) <- gsub("^X", "",  colnames(data))
+names(data)
+
+#Columns to average
+nums_to_avg = c(
+    "minutes", 
+    "set_tot",
+    "ace", 
+    "df", 
+    "svpt",
+    "1stIn", 
+    "1stWon", 
+    "2ndWon", 
+    "SvGms",
+    "bpSaved", 
+    "bpFaced", 
+    "1st_made",
+    "2ndIn",
+    "2nd_made",
+    "1st_serve_perc_win", 
+    "2nd_serve_perc_win", 
+    "1st_serve_rating",
+    "2nd_serve_rating",
+    "1st_effect", 
+    "return_perc_win",
+    "servewon_perc_total",
+    "returnwon_perc_total",
+    "point_dom", 
+    "win_bp_perc",
+    "bp_convert_perc", 
+    "bp_ratio", 
+    "setwon_perc", 
+    "ptswon_perc",
+    "pts2sets_op_ratio",
+    "gameswon_perc", 
+    "gmstosets_op_ratio", 
+    "ptstogame_op_ratio",
+    "bpwon_perc",
+    "bp_op_ratio", 
+    "bp_saved_perc", 
+    "bp_saved_op_ratio",
+    "bp_convert_op_ratio", 
+    "ace_perc", 
+    "df_perc", 
+    #"latest_elo", 
+    #"delta_elo", 
+    #"bof3_odds", 
+    #"bo5_odds",
+    "upset_scored", 
+    "upset_against", 
+    "Win_percent"
+)
+
+#Make sure they;re all numeric
+data <- data %>% mutate_at(nums_to_avg, as.numeric)
+
+#Rolling averages 
+data <- data %>%
+group_by(name) %>%
+  mutate(across(.cols = nums_to_avg,
+                ~ runner::mean_run(x = ., k = 30, lag = 1),
+                .names = '{.col}_av'))
+
+rolled_up <- c()
+for (i in 1:length(nums_to_avg)) {
+  new_value <- paste(nums_to_avg[i], "_av", sep="")
+  rolled_up <- c(rolled_up, new_value)
+}
+
+rolled_up <- c(nums_to_avg, rolled_up)
+
+data <- data %>% pivot_wider(id_cols = c("tourney_id", "match_num"), 
+                               names_from = "player", 
+                               values_from = c("id", 
+                                               "name", 
+                                               "Win", 
+                                               "tourney_date", 
+                                               "tourney_name", 
+                                               "tourney_level", 
+                                               "draw_size", 
+                                               "surface", 
+                                               "score", 
+                                               "best_of", 
+                                               "round", 
+                                               #"year", 
+                                               "ret", 
+                                               "rank", 
+                                               "rank_points", 
+                                               "set_1", 
+                                               #"TB_1", 
+                                               "set_2", 
+                                               #"TB_2", 
+                                               "set_3", 
+                                               #"TB_3", 
+                                               "set_4", 
+                                               #"TB_4", 
+                                               "set_5", 
+                                               #"TB_5", 
+                                               "rank_diff", 
+                                               "seed", 
+                                               "hand", 
+                                               "ht", 
+                                               "age", 
+                                               rolled_up))
+```
+
+#Select top 20 variables including outcome
+```{r}
+#Add row IDs
+# Add a row number identifier column
+data <- data %>%
+  mutate(row_id = row_number())
+
+#We will need these identifiers -- drop for modeling but merge back 
+identifiers <- c(
+  "row_id",
+  "tourney_id",
+  "match_num",
+  "id_P_1",
+  "id_P_2",
+  "name_P_1",
+  "name_P_2",
+  "tourney_name_P_1",
+  "Win_P_1"
+)
+
+top20_featimp <- c("row_id",
+                   "rank_diff_P_1", #We'll just pick the P1 rank diff, it's the same  
+                   "ht_P_1", 
+                   "ht_P_2", 
+                   "age_P_1", 
+                   "age_P_2", 
+                   "set_tot_av_P_1", 
+                   "set_tot_av_P_2", 
+                   "ace_av_P_1", 
+                   "ace_av_P_2", 
+                   "df_av_P_1", 
+                   "df_av_P_2", 
+                   "svpt_av_P_1", 
+                   "svpt_av_P_2", 
+                   "1stIn_av_P_1", 
+                   "1stIn_av_P_2", 
+                   "1stWon_av_P_1", 
+                   "1stWon_av_P_2", 
+                   "2ndWon_av_P_1", 
+                   "2ndWon_av_P_2", 
+                   #"X1stIn_av_P_1", 
+                   #"X1stIn_av_P_2", 
+                   #"X1stWon_av_P_1", 
+                   #"X1stWon_av_P_2", 
+                   #"X2ndWon_av_P_1", 
+                   #"X2ndWon_av_P_2", 
+                   "SvGms_av_P_1")
+
+data <- data %>% select(c(top20_featimp, identifiers))
+
+```
+
+#Additional cleaning
+```{r}
+#Convert back to dataframe
+data <- data %>%
+  unnest(cols = c(top20_featimp, identifiers))
+
+#Preserve complete cases
+data <- data[complete.cases(data),]
+
+data_ids <- data %>% select(identifiers)
+data_train <- data %>% select(top20_featimp)
+
+#Let's export these files for our modeling RMD
+write.csv(data_ids, "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/test2023_data_ids.csv", row.names=FALSE)
+write.csv(data_train, "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/test2023_data_train.csv", row.names=FALSE)
+
+```
+
+#Process for modeling
+```{r}
+#Make copies
+data_ids_copy <- data_ids
+data_train_copy <- data_train
+
+#Scale the data 
+data_train_copy <- data_train_copy %>% select(!row_id)
+clean_data_frame <- as.data.frame(scale(data_train_copy))
+
+#Rename one variable
+clean_data_frame <- clean_data_frame %>% rename(rank_diff = rank_diff_P_1)
+
+#Set the label 
+y_test <- as.data.frame(data_ids_copy$Win_P_1)
+colnames(y_test) <- "label"
+
+```
+

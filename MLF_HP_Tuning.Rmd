@@ -27,6 +27,9 @@ library(e1071)
 library(corrr)
 library(FactoMineR)
 library(factoextra)
+library(readr)
+library(tidymodels)
+library(parsnip)
 
 #Set system variables
 Sys.setenv(MLFLOW_BIN='/opt/anaconda3/envs/mlflow-env/bin/mlflow')
@@ -36,7 +39,7 @@ Sys.setenv(MLFLOW_PYTHON_BIN='/opt/anaconda3/envs/mlflow-env/bin/python')
 Sys.setenv(MLFLOW_VERBOSE=TRUE)
 
 # go to terminal and run the following
-#/opt/anaconda3/envs/mlflow-env/bin/mlflow server --port 5000 --backend-store-uri \
+# /opt/anaconda3/envs/mlflow-env/bin/mlflow server --port 5000 --backend-store-uri \
 #  /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns --host 127.0.0.1 --port 5000 --no-serve-artifacts \
 #  --workers 4
 
@@ -55,9 +58,8 @@ mlflow_ui()
 
 ```
 
-```{r}
 #Functions
-
+```{r}
 #Get predictions on test 
 get_predictions_on_test <- function(y_test, x_test, predictions, confidence, clean_df) {
     
@@ -135,23 +137,6 @@ brier_score_loss <- function(y_true, y_pred) {
 
 ```
 
-
-```{r}
-#Let's set some things up first 
-#Top two performing models based on model testing were 
-#RF + SVM Radial Kernel – AUC 0.828
-#RF + XGB – AUC 0.822
-
-#What are the parameters to test? 
-#For RF: we will keep top 20 features 
-#For SVM: the cost function, gamma
-#for C in [10, 100, 1000, 2000, 3000, 4000, 5000]
-#for g in [0.1, 0.01, 0.001, 0.0001]
-#For XGB: eta = 0.1, nrounds = 25, max_depth = 15, subsample = 0.5 (we won't tune all of these)
-
-#Metrics: train_acc, test_acc, tn, fn, fp, tp, f1_score, precision_0, precision_1, recall_0, recall_1, roc_auc
-```
-
 #Data preprocessing steps
 ```{r}
 #The top 20 features were chosen from random forest 
@@ -194,6 +179,7 @@ set.seed(42)
 all_data <- cbind(data_x_train_scaled, data_y_train)
 rows <- sample(nrow(all_data))
 all_data <- all_data[rows,]
+
 ```
 
 #Data partitioning
@@ -205,21 +191,13 @@ all_data <- all_data[rows,]
 #We'll use the full data here
 clean_dataframe <- all_data
 
-#Data train test split outside of the loop 
+#Data train test split outside of the mlflow loops
 print("Splitting data...")
 seed = 42
 set.seed(seed)
 data_split <- rsample::initial_split(clean_dataframe, prop=0.75, strata='label')
-
-#We have to shuffle again and split 
 training_data <- rsample::training(data_split)
 test_data <- rsample::testing(data_split)
-
-train_rows <- sample(nrow(training_data))
-training_data <- training_data[train_rows,]
-
-test_rows <- sample(nrow(test_data))
-test_data <- training_data[test_rows,]
            
 X_train <- training_data %>% select(!label)
 X_test <- test_data %>% select(!label)
@@ -228,7 +206,7 @@ y_test <- test_data %>% select(label)
 
 ```
 
-#MLFlow experiments with SVM Radial Kernel 
+#MLFlow Runs with SVM Radial Kernel 
 ```{r}
 #Set the hyperparameters 
 #SVM Radial Kernel HPs
@@ -460,6 +438,7 @@ for(C in c_range){
            mlflow_log_model(crate_model, artifact_path = '')
 
            #Log the artifacts into mlflow
+           saveRDS(model, "model.rds")
            mlflow_log_artifact("model.rds")
            mlflow_log_artifact("MLF_HP_Tuning.Rmd")
            
@@ -477,7 +456,7 @@ for(C in c_range){
 
 #XGB HPs
 eta_range <- list(0.01, 0.05, 0.1, 0.2, 0.3)
-n_rounds_range <- list(100, 200, 300, 500, 1000)
+n_rounds_range <- list(20, 30, 40, 50)
 max_depth_range <- list(5, 10, 15, 20)
 eta <- 0.1 #test
 n_rounds <- 100 #test
@@ -532,9 +511,8 @@ for(e in eta_range){
                               eta = e,
                               nrounds = n,
                               max_depth = m,
-                              #eta = eta_range, 
-                              #nrounds = n_rounds_range, 
-                              #max_depth = max_depth_range,
+                              early_stopping_rounds = 3,
+                              eval_metric="auc",
                               objective = "binary:logistic")
              
              #Get training predictions
@@ -632,7 +610,7 @@ for(e in eta_range){
              metrics <- list()
              
              #Calculate and store metrics
-             #metrics$train_accuracy <- MLmetrics::Accuracy(train_preds, y_train)
+             metrics$train_accuracy <- MLmetrics::Accuracy(train_preds_classes, y_train)
              metrics$test_accuracy <- MLmetrics::Accuracy(test_pred_classes, y_test)
              
              metrics$tn <- cm[[2]][1]
@@ -670,6 +648,7 @@ for(e in eta_range){
              metrics$auc <- roc$auc[1]
              
              #Log and print the metrics
+             mlflow_log_metric("train_acc", metrics$train_accuracy)
              mlflow_log_metric("test_acc", metrics$test_accuracy)
              mlflow_log_metric("tn", metrics$tn)
              mlflow_log_metric("fn", metrics$fn)
@@ -700,6 +679,7 @@ for(e in eta_range){
              mlflow_log_model(crate_model, artifact_path = '')
   
              #Log the artifacts into mlflow
+             saveRDS(model, "model.rds")
              mlflow_log_artifact("model.rds")
              mlflow_log_artifact("MLF_HP_Tuning.Rmd")
              
@@ -710,4 +690,3 @@ for(e in eta_range){
   } 
 }
 ```
-

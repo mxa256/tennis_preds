@@ -639,7 +639,7 @@ surface_fxn <- function(data=fulldata, surface_type){
   
 #   #Plotting
   win_perc_plot <- ggplot(total_perc_20) +
-    geom_col(mapping = aes(x=reorder(Name, -win_perc_round), y=win_perc_round), fill='firebrick') +
+    geom_col(mapping = aes(x=reorder(Name, -win_perc_round), y=win_perc_round), fill='#0066FF') +
     geom_text(mapping = aes(x=reorder(Name, -win_perc_round), y=win_perc_round, label=win_perc_round), vjust=-0.5) +
     theme(axis.text.x=element_text(angle=60, hjust=1)) +
     ggtitle(paste("Top 20 ATP Win Percentages on", surface_type, sep=" ")) +
@@ -649,6 +649,11 @@ surface_fxn <- function(data=fulldata, surface_type){
 print(win_perc_plot)
 }
 
+##669900 for grass color
+#FF9933 for clay color
+#0066FF for hard court color
+
+#firebrick 
 #HARD COURTS
 hard <- surface_fxn(fulldata, "Hard")
 
@@ -714,7 +719,6 @@ print(220/2221)
 prop.test(x = c(48, 220), n = c(506, 2221), alternative='two.sided')
 
 ```
-
 
 #EDA: How tall are players in the ATP? 
 ```{r}
@@ -803,7 +807,7 @@ data4 <- data4 %>% rowwise() %>% mutate(w_set_tot = sum(w_set1, w_set2, w_set3, 
                                         l_set_tot = sum(l_set1, l_set2, l_set3, l_set4, l_set5, na.rm=T))
 
       
-##PLEASE REFER TO WORD DOCUMENT FOR INFORMATION REGARDING STATISTICS AND MEANING
+##PLEASE REFER TO DOCUMENTATION FOR INFORMATION REGARDING STATISTICS AND MEANING
 ##I WILL NOT BE ELABORATING IN DEPTH HERE
 #We need to calculate the percentages of first serves made
 data4$w_1st_made <- data4$w_1stIn/data4$w_svpt
@@ -929,8 +933,8 @@ data4$w_ace_perc <- data4$w_ace/data4$w_svpt
 data4$l_ace_perc <- data4$l_ace/data4$l_svpt
 
 #DF rate
-data4$w_df_perc = data4$w_df/data4$w_svpt
-data4$l_df_perc = data4$l_df/data4$l_svpt
+data4$w_df_perc <- data4$w_df/data4$w_svpt
+data4$l_df_perc <- data4$l_df/data4$l_svpt
 
 
 
@@ -1166,8 +1170,7 @@ data6$p2_bo5_odds <- ifelse(data6$p2_bo5_odds < 0, 1.0, data6$p2_bo5_odds)
 
 ```
 
-#Rolling averages 
-
+#Feature Extraction: Calculating rolling averages 
 ```{r}
 #Rolling averages are more informative, since we won't have match data to make predictions
 data6 <- data6 %>% rename(p1_latest_elo = latest_elo_p1,
@@ -1296,7 +1299,6 @@ data8 <- data7 %>% pivot_wider(id_cols = c("tourney_id", "match_num"),
 ```
 
 #Remove unwanted cols
-
 ```{r}
 #We have a lot of columns, let's get rid of redundant columns 
 
@@ -1405,7 +1407,6 @@ ggpairs(data12, mapping = aes(color = Win), columns = c("point_dom_av", "gmstose
 ```
 
 #Dummify categorical variables
-
 ```{r}
 names(data_clean)
 
@@ -1498,310 +1499,6 @@ write.csv(data_train, "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds
 
 ```
 
-
-#_________________________________________________________________________________________________________
-#Scale/transform variables
-```{r}
-
-#We will scale using the scale variable in R
-#https://stackoverflow.com/questions/49260862/trainable-sklearn-standardscaler-for-r
-
-data_x_train_scaled <- as.data.frame(scale(data_train))
-data_y_train <- as.data.frame(data_ids$Win_P_1)
-
-#It looks like after scaling we have two columns with missing values, so we will drop them for now 
-to_drop <- c("bp_ratio_av_P_1",
-             "bp_ratio_av_P_2")
-
-data_x_train_scaled <- data_x_train_scaled %>% select(!to_drop)
-
-```
-
-#Modeling
-
-```{r}
-#The outcome variable of interest is: data_ids$Win_P_1
-
-#We will build out the following models
-#1. Random forest (baseline)
-#2. Random forest feature importance + regression
-#3. Random forest feature importance + SVM
-#4. Random forest feature importance + XGBoost
-#5. PCA + regression
-#6. PCA + SVM
-#7. PCA + random forest
-#8. PCA + XGBoost
-#9. Shallow neural network 
-
-```
-
-#Model 1: Baseline Random forest in R 
-
-```{r}
-#Let's try a baseline RF model
-
-data_y_rf <- as.factor(data_ids$Win_P_1)
-rf <- randomForest(y=data_y_rf, 
-                   x=data_x_train_scaled, 
-                   proximity=TRUE,
-                   replace=TRUE,
-                   importance=TRUE) 
-
-print(rf)
-
-#Out of bag error is 12.58%, so the train data set model accuracy is around 87%.
-#500 trees, 10 variables at each split
-
-#Let's look at feature importance, i.e. the top 10 most important features
-head(rf$importance, 10)
-
-#We can see how it classifies each sample
-first <- as.data.frame(rf$votes)
-second <- data_y_train
-head(cbind(first, second), 10)
-tail(cbind(first, second), 10)
-
-#Visualizations
-plot(rf,
-     main="Random Forest Error Rate",
-     #xlab="Number of Trees",
-     #ylab="Error Rate", 
-     lwd=1.5,
-     panel.first={
-        axis(1, tck=1, col.ticks="light gray")
-        axis(1, tck=-0.015, col.ticks="black")
-        axis(2, tck=1, col.ticks="light gray", lwd.ticks="1")
-        axis(2, tck=-0.015)
-        minor.tick(nx=5, ny=2, tick.ratio=0.5)
-        box()
- })
-
-#Tree size
-hist(treesize(rf),
-     main = "No. of Nodes for the Trees",
-     col = "green", 
-     xlab="Tree Size",
-     breaks=20, 
-     xlim=c(975, 1200))
-
-#Variable Importance
-varImpPlot(rf,
-           sort = T,
-           n.var = 10,
-           main = "Top 10 - Variable Importance")
-
-
-#Let's take the top 50 important variables, so that will cut our features in half  
-top20_featimp <- rownames(head(rf$importance, 20))
-
-```
-
-#Pre modeling PCA
-
-```{r}
-options(ggrepel.max.overlaps = Inf)
-
-#We have 104 variables
-#We will do PCA as an alternative for dimension reduction (other method was RF feature importance, picking top 50 important features)
-#We will use the top 20 components (just like for RF, we use the top 20 most important features)
-
-#R package for correlation analysis
-library(corrr)
-
-#Mainly used for multivariate exploratory data analysis; the factoMineR package gives access to the PCA module to perform principal component analysis. 
-library("FactoMineR")
-
-#This package provides all the relevant functions to visualize the outputs of the principal component analysis. These functions include but are not limited to scree plot, biplot, only to mention two of the visualization techniques covered later in the article.
-library("factoextra")
-
-#Create the correlation matrix
-corr_matrix <- cor(data_x_train_scaled)
-pca_data <- princomp(corr_matrix)
-summary(pca_data)
-plot(pca_data)
-
-pca_data <- princomp(na.omit(data_x_train_scaled))
-
-#We create 104 principal components
-#What are the loadings? Let's examine the first two components
-pca_data$loadings[,1:2]
-
-#Scree plot
-#This plot shows the eigenvalues in a downward curve, from highest to lowest. The first two components can be considered to be the most significant since they contain almost 70% of the total information of the data.
-fviz_eig(pca_data, addlabels = TRUE)
-
-#Biplot of attributes - let's just do the first 20 beacuse there's 104 components
-#With the biplot, it is possible to visualize the similarities and dissimilarities between the samples, and further shows the impact of each attribute on each of the principal components.
-#First, all the variables that are grouped together are positively correlated to each other
-#Then, the higher the distance between the variable and the origin, the better represented that variable is
-#Finally, variables that are negatively correlated are displayed to the opposite sides of the biplot’s origin. 
-fviz_pca_var(pca_data, 
-             col.var = "black",
-             select.var = list(cos2=20))
-
-#Another way of making the same plot
-fviz_pca_ind(pca_data,
-             col.ind = "cos2", 
-             pointsize = "cos2",
-             gradient.cols = c("#FFCCFF", "#CC0066", "#000000"),
-             repel = TRUE)
-
-#Contribution of each variable
-#The goal of this visualization is to determine how much each variable is represented in a given component. Such a quality of representation is called the Cos2 and corresponds to the square cosine, and it is computed using the fviz_cos2 function.
-fviz_cos2(pca_data, 
-          choice = "var", 
-          axes = 1)
-
-#Biplot combined with cos2 
-#The biplot and attributes importance can be combined to create a single biplot, where attributes with similar cos2 scores will have similar colors
-#From the biplot below:
-##High cos2 attributes are colored in green
-##Mid cos2 attributes have an orange color
-##Finally, low cos2 attributes have a black color 
-fviz_pca_var(pca_data, 
-             col.var = "cos2",
-             gradient.cols = c("black", "orange", "green"),
-             repel = TRUE, 
-             select.var = list(cos2=20))
-
-#Let's extract the top 20 PCA components for our models
-# Extract the results for variables and individuals
-top20_pca <- as.data.frame(pca_data$loadings[,1:20])
-
-
-```
-
-#Alternative PCA calculation
-
-```{r eval = FALSE}
-
-#Let's try a different PCA
-pca.out <- prcomp(data_x_train_scaled)
-
-#Biplot
-pca.var <- pca.out$sdev^2
-
-pve <- pca.var/sum(pca.var)
-
-plot(pve, 
-     xlab="Principal Component",
-     ylab="Proportion of Variance Explained", 
-     ylim=c(0, 1),
-     type="b")
-
-
-plot(cumsum(pve),
-     xlab="Principal Component",
-     ylab="Accumulative Prop. of Variance Explained",
-     ylim=c(0,1),
-     type="b")
-
-#Construct new data with the PCA selected components
-pca_lr_data <- data.frame(data_y_train, pca.out$x[,1:20])
-head(pca_lr_data)
-
-```
-
-#Model 5: PCA + logistic regression
-
-```{r}
-
-#To get the scores, we need to matrix multiply the loadings with the data 
-pca_matrix <- data.matrix(top20_pca)
-data_matrix <- data.matrix(data_x_train_scaled)
-pca_x_train <- data.frame(data_matrix %*% pca_matrix)
-
-data_y_train_lr <- data.matrix(data_y_train)
-pca_lr_model <- glm(data_y_train_lr ~ ., 
-                    data=pca_x_train, 
-                    family="binomial")
-
-
-summary(pca_lr_model)
-
-predicted_values <- as.data.frame(pca_lr_model$fitted.values)
-predicted_classes <- ifelse(predicted_values > 0.5, 1, 0)
-colnames(predicted_classes) <- "Predicted"
-
-
-training_preds_actual <- cbind(data_y_train, predicted_classes)
-colnames(training_preds_actual) <- c("Actual", "Predicted")
-
-Actual <- factor(c(0, 0, 1, 1))
-Predicted <- factor(c(0, 1, 0, 1))
-values <- table(training_preds_actual)[1:4]
-cf_data <- data.frame(Actual, Predicted, values)
-
-ggplot(cf_data =  training_preds_actual, mapping = aes(x = Actual, y = Predicted)) +
-  geom_tile(aes(fill = values), colour = "white") +
-  geom_text(aes(label = sprintf("%1.0f", values)), vjust = 1) +
-  scale_fill_gradient(low = "blue", high = "red") +
-  theme_bw() + theme(legend.position = "none") + 
-  ggtitle("PCA + LR: Confusion Matrix")
-
-
-confusion_matrix <- as.data.frame(table(training_preds_actual))
-
-ggplot(data = confusion_matrix,
-       mapping = aes(x = Actual,
-                     y = Predicted)) +
-  geom_tile(aes(fill = Freq)) +
-  geom_text(aes(label = sprintf("%1.0f", Freq)), vjust = 1) +
-  scale_fill_gradient(low = "blue",
-                      high = "red",
-                      trans = "log") + # if your results aren't quite as clear as the above example
-  ggtitle("PCA + LR: Confusion Matrix")
-
-#ROC curve
-test <- roc(data_y_train_lr, 
-            pca_lr_model$fitted.values, 
-            auc=TRUE, 
-            ci=TRUE, 
-            ci.type="bars",
-            plot=TRUE, 
-            grid=TRUE, 
-            percent=TRUE, 
-            boot.n=100, 
-            ci.alpha=0.9, 
-            stratified=FALSE,
-            show.thres=TRUE, 
-            legacy.axes=TRUE,
-            reuse.auc=TRUE, 
-            print.auc=TRUE,
-            print.thres.col="blue",
-            print.thres.cex=0.7,
-            main="PCA + LR: ROC Curve")
-
-#Another way
-ggplot(training_preds_actual, aes(d = Actual, m = Predicted)) + 
-  geom_roc(n.cuts = 0)
-
-```
-
-#Model 9: Shallow neural net
-```{r}
-
-nn <- neuralnet(w~f.wins+f.losses+f.gp+f.percent+s.wins+s.losses+s.gp+s.percent,data=train,hidden=c(5),linear.output=F,err.fct = j)
-pr.nn <- neuralnet::compute(nn,subset(test,select=c(2,3,4,5,7,8,9,10)))
-pred.results <- ifelse(pr.nn$net.result > 0.5,1,0)
-MSE.nn <- sum((test$w-pred.results)^2)/nrow(test)
-for (i in 1:length(pr.nn$net.result)){
-  if (pr.nn$net.result[i]>.99999){
-    pr.nn$net.result[i]=.999999
-  }
-  if (pr.nn$net.result[i]<.000001){
-    pr.nn$net.result[i]=.000001
-  }
-}
-tw<-as.matrix(test$w)
-ce <- (-1)*(t(tw) %*% log(pr.nn$net.result) + t(1-tw)%*%log(1-pr.nn$net.result))
-
-MSE.nn
-ce
-
-```
-
-
 #Code references
 ```{r}
 
@@ -1832,20 +1529,3 @@ ce
 #https://github.com/polmarin/Data-Analysis-Tennis/blob/main/Portfolio%20Project.ipynb
 
 ```
-
-##Other questions to consider or explore 
-```{r}
-
-#How often in best of 5 does the winner of first set lose
-#1. Create variable for each set's winner and loser
-
-#How often does someone come back from being match point down and then go on to win the match 
-
-#How often does someone serve below 50% and still win the match 
-
-#How many times does someone have more errors and still win
-#More errors that winners or more errors than their opponent?
-
-#How many times someone hasn’t dropped a single set and then gone on to win the slam 
-```
-

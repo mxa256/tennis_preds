@@ -50,7 +50,6 @@ data_train <- read.csv("/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_pred
 ```
 
 #Scale/transform variables
-
 ```{r}
 
 #We will scale using the scale variable in R
@@ -69,9 +68,10 @@ data_x_train_scaled <- data_x_train_scaled %>% select(!to_drop)
 ```
 
 #Modeling Plan
-
 ```{r}
 #The outcome variable of interest is: data_ids$Win_P_1
+
+#We have many features, so let's do some feature selection with RF and PCA prior to running our models
 
 #We will build out the following models
 #1. Random forest feature importance + regression
@@ -140,8 +140,8 @@ hist(treesize(rf),
 #Variable Importance
 varImpPlot(rf,
            sort = T,
-           n.var = 10,
-           main = "Top 10 - Variable Importance")
+           n.var = 20,
+           main = "Top 20 - Variable Importance")
 
 #Let's take the top 20 important variables
 top20_featimp <- rownames(head(rf$importance, 20))
@@ -442,18 +442,60 @@ options(ggrepel.max.overlaps = Inf)
 
 #Create the correlation matrix
 corr_matrix <- cor(X_train)
-pca_data <- princomp(corr_matrix)
+
+#The covariance matrix is not positive definite, as evidenced by negative eigenvalues
+#This will throw an error with princomp
+cov_matrix <- cov(X_train)
+eigenvalues <- eigen(cov_matrix)$values
+print(eigenvalues)
+
+#One common approach to handle non-positive definite covariance matrices is to add a small value to the diagonal elements (regularization)--this can make the matrix positive definite
+epsilon <- 1e-6
+cov_matrix_regularized <- cov_matrix + diag(epsilon, ncol(cov_matrix))
+eigenvalues_regularized <- eigen(cov_matrix_regularized)$values
+print(eigenvalues_regularized)
+
+#Now run the PCA model 
+pca_data <- princomp(covmat=cov_matrix_regularized)
 summary(pca_data)
 plot(pca_data)
 
-pca_data <- princomp(na.omit(X_train))
+#We should still check for multicollinearity 
+#Let's look for perfect correlations
+perfect_correlations <- which(abs(corr_matrix) == 1, arr.ind = TRUE)
+#Remove self correlations
+perfect_correlations <- perfect_correlations[perfect_correlations[, 1] != perfect_correlations[, 2], ]
+#See which variables are perfectly correlated
+if (nrow(perfect_correlations) == 0) {
+  cat("No perfect correlations found.\n")
+} else {
+  cat("Perfect correlations (1 or -1) found between the following variable pairs:\n")
+  apply(perfect_correlations, 1, function(index_pair) {
+    cat(colnames(cor_matrix)[index_pair[1]], "-", colnames(cor_matrix)[index_pair[2]], "\n")
+  })
+}
 
-#We create 104 principal components
+#Ok well this makes sense, because each variable is the inverse of each other 
+# Perfect correlations (1 or -1) found between the following variable pairs:
+# returnwon_perc_total_av_P_1 - servewon_perc_total_av_P_1 
+# servewon_perc_total_av_P_1 - returnwon_perc_total_av_P_1 
+# bp_saved_perc_av_P_2 - win_bp_perc_av_P_2 
+# win_bp_perc_av_P_2 - bp_saved_perc_av_P_2 
+
+#win_bp_perc_av_P_2           51  71
+#bp_saved_perc_av_P_2         71  51
+#returnwon_perc_total_av_P_1  46  44
+#servewon_perc_total_av_P_1   44  46
+
+#PCA covariance matrix is still not positive definite after dropping multicollinear variables
+#We will stick with regularization technique 
+
+#We created 104 principal components
 #What are the loadings? Let's examine the first two components
 pca_data$loadings[,1:2]
 
 #Scree plot
-#This plot shows the eigenvalues in a downward curve, from highest to lowest. The first two components can be considered to be the most significant since they contain almost 32% of the total information of the data.
+#This plot shows the eigenvalues in a downward curve, from highest to lowest. The first two components can be considered to be the most significant since they contain about 32% of the total information of the data.
 #There's a clear drop off after the first two components 
 fviz_eig(pca_data, addlabels = TRUE)
 
@@ -497,30 +539,84 @@ top20_pca <- as.data.frame(pca_data$loadings[,1:20])
 
 ```
 
-#Alternative PCA calculation
-
+#Alternative PCA calculation - this is what we will use for prelim models
 ```{r eval = FALSE}
 
+#Prcomp package seems to be better 
 #Let's try a different PCA
 pca.out <- prcomp(X_train)
 
-#Biplot
+#Calculate variance 
 pca.var <- pca.out$sdev^2
 
+#Calculate proportion of variance explained 
 pve <- pca.var/sum(pca.var)
 
+#Scree plot 
 plot(pve, 
      xlab="Principal Component",
      ylab="Proportion of Variance Explained", 
-     ylim=c(0, 1),
+     main="Scree Plot",
+     #ylim=c(0, 1),
      type="b")
 
+#Create scree plot using ggplot2 (nicer looking)
+pve_df <- data.frame(Principal_Component = 1:length(pve), Variance_Explained = pve)
+ggplot(pve_df, aes(x = Principal_Component, y = Variance_Explained)) +
+  geom_point() +
+  geom_line() +
+  labs(title = "Scree Plot", x = "Principal Component", y = "Proportion of Variance Explained") +
+  theme_minimal()
 
+
+#Compute cumulative proportion of variance explained
+cum_pve <- cumsum(pve)
+
+#Create cumulative scree plot
 plot(cumsum(pve),
      xlab="Principal Component",
-     ylab="Accumulative Prop. of Variance Explained",
+     ylab="Cumulative Proportion of Variance Explained",
+     main="Cumulative Scree Plot",
      ylim=c(0,1),
      type="b")
+
+#Create cumulative scree plot using ggplot2 (nicer looking)
+pve_df$cum_pve <- cum_pve
+ggplot(pve_df, aes(x = Principal_Component, y = cum_pve)) +
+  geom_point() +
+  geom_line() +
+  labs(title = "Cumulative Scree Plot", x = "Principal Component", y = "Cumulative Proportion of Variance Explained") +
+  theme_minimal()
+
+#Create raw biplot - shows scores and loadings of PCs
+biplot(pca.out, scale = 0)
+
+#Extract scores and loadings
+scores <- as.data.frame(pca.out$x)
+loadings <- as.data.frame(pca.out$rotation)
+
+#Create a data frame for scores with principal component columns
+scores_df <- data.frame(scores, Sample = rownames(scores))
+
+#Create a data frame for loadings with variable names
+loadings_df <- data.frame(loadings, Variable = rownames(loadings))
+
+#Plot scores (biplot)
+ggplot(scores_df, aes(x = PC1, y = PC2, label = Sample)) +
+  geom_point() +
+  geom_text(vjust = 1.5, hjust = 1.5) +
+  labs(title = "PCA Biplot", x = "PC1", y = "PC2") +
+  theme_minimal()
+
+#Plot loadings (biplot)
+ggplot(loadings_df, aes(x = PC1, y = PC2, label = Variable)) +
+  geom_point(color = 'red') +
+  geom_text(vjust = 1.5, hjust = 1.5, color = 'red') +
+  labs(title = "PCA Biplot", x = "PC1", y = "PC2") +
+  theme_minimal()
+
+#Pairs plot - a pairs plot shows scatter plots of the principal component scores against each other
+pairs(pca.out$x[, 1:5], main = "Pairs Plot of First 5 Principal Components")
 
 #Construct new data with the PCA selected components
 pca_lr_data <- data.frame(Y_train, pca.out$x[,1:20])
@@ -530,7 +626,6 @@ head(pca_lr_data)
 
 
 #Model 5: PCA + logistic regression
-
 ```{r}
 
 #To get the scores, we need to matrix multiply the loadings with the data 
@@ -624,7 +719,6 @@ pca_lr_roc
 ```
 
 #Model 6: PCA + SVM 
-
 ```{r}
 #pca_x_train is our predictors dataframe
 #data_y_train is our label dataframe
@@ -734,7 +828,6 @@ pca_svm_radial_roc
 ```
 
 #Model 7: PCA + Random Forest
-
 ```{r}
 
 data_y_pca_rf <- as.factor(Y_train$label)
@@ -817,9 +910,7 @@ pca_rf_roc <- roc(data_y_test_pca_rf,
 ```
 
 #Model 8: PCA + XGBoost
-
 ```{r}
-
 data_train_xgboost <- data_train_pca_svm
 
 pca_xgboost <- xgboost(data = data.matrix(data_train_xgboost[, -21]), 
@@ -889,8 +980,6 @@ pca_xgb_roc
 ```
 
 #Model 9: Shallow neural net
-
-
 ```{r}
 #https://www.geeksforgeeks.org/build-a-neural-network-classifier-in-r/#
 
@@ -948,8 +1037,6 @@ cat("Test accuracy:", eval_result[2], "\n")
 
 #Code references
 ```{r}
-
-#Good code
 #https://www.kaggle.com/code/sadz2201/tennis-exploration-atpboost
 #https://www.kaggle.com/code/jedipro/atp-men-s-tour-predictive-model-with-xgboost/script
 #https://github.com/BrandoPolistirolo/Tennis-Betting-ML/blob/main/Training.py
@@ -959,19 +1046,14 @@ cat("Test accuracy:", eval_result[2], "\n")
 #https://github.com/MareoRaft/tennis/tree/master/frontend
 #https://github.com/shukkkur/Tennis-Match-Prediction/blob/main/ModelsAndPredictions.ipynb
 #https://github.com/chief-r0cka/MLT/blob/master/Eda-data-prep-modeling-predictions-then-betting.ipynb
-#https://github.com/andmon97/ATPTennisMatchPredictions/blob/main/ML_tennis.pdf <-- THIS ONE IS DECENT, the accompanying paper is helpful 
-
+#https://github.com/andmon97/ATPTennisMatchPredictions/blob/main/ML_tennis.pdf
 #https://github.com/edouardthom/ATPBetting/blob/master/Beating%20the%20bookmakers%20on%20tennis%20matches.ipynb
 #https://github.com/molson194/Tennis-Betting-ML/blob/master/train.py
 #https://github.com/rajdua22/tennis_betting
-#https://github.com/chief-r0cka/MLT/blob/master/Eda-data-prep-modeling-predictions-then-betting.ipynb <-- THIS IS INTERESTING LOOKING AT BETTING SITES
-
+#https://github.com/chief-r0cka/MLT/blob/master/Eda-data-prep-modeling-predictions-then-betting.ipynb 
 #https://hub.docker.com/r/mcekovic/uts-database
 #https://github.com/mcekovic/tennis-crystal-ball/issues 
-
-#Resources I've reviewed
 #https://github.com/johncookds/Predicting-Tennis-Matches/blob/master/MLFinalpaper.Rmd
-#https://www.ultimatetennisstatistics.com/glossary
 #https://github.com/polmarin/Data-Analysis-Tennis/blob/main/Portfolio%20Project.ipynb
 
 ```
