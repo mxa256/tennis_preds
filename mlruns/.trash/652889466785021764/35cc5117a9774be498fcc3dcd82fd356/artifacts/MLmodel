@@ -1,7 +1,0 @@
-utc_time_created: 2024-06-03 21:22:27.483551
-run_id: 35cc5117a9774be498fcc3dcd82fd356
-artifact_path: ''
-flavors:
-  crate:
-    version: 0.1.0
-    model: crate.bin
