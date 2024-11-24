@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/652889466785021764/25cf74e7badc4b8d85042887d4bfca64/artifacts
+deleted_time: 1717451185146
+end_time: 1717449828099
+entry_point_name: ''
+experiment_id: '652889466785021764'
+lifecycle_stage: deleted
+run_id: 25cf74e7badc4b8d85042887d4bfca64
+run_name: defiant-mole-715
+run_uuid: 25cf74e7badc4b8d85042887d4bfca64
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717449816810
+status: 4
+tags: []
+user_id: mona

@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/829979749189924477/595176ff20d449ed81455b565bb9b8b3/artifacts
+deleted_time: 1717474020518
+end_time: 1717473517966
+entry_point_name: ''
+experiment_id: '829979749189924477'
+lifecycle_stage: deleted
+run_id: 595176ff20d449ed81455b565bb9b8b3
+run_name: traveling-bat-644
+run_uuid: 595176ff20d449ed81455b565bb9b8b3
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717473493716
+status: 3
+tags: []
+user_id: mona

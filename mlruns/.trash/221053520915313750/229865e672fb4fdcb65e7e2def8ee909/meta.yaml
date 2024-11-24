@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/229865e672fb4fdcb65e7e2def8ee909/artifacts
+deleted_time: 1717477720129
+end_time: 1717475751756
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: 229865e672fb4fdcb65e7e2def8ee909
+run_name: upset-squirrel-471
+run_uuid: 229865e672fb4fdcb65e7e2def8ee909
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717475742849
+status: 3
+tags: []
+user_id: mona

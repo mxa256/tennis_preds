@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/829979749189924477/2446b94fdcd941719dbe56e85b67ed42/artifacts
+deleted_time: 1717474020518
+end_time: 1717473695078
+entry_point_name: ''
+experiment_id: '829979749189924477'
+lifecycle_stage: deleted
+run_id: 2446b94fdcd941719dbe56e85b67ed42
+run_name: powerful-moth-631
+run_uuid: 2446b94fdcd941719dbe56e85b67ed42
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717473656170
+status: 3
+tags: []
+user_id: mona

@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/816121003528278279/0007768b33934087806e6cd249231fcb/artifacts
+deleted_time: 1717473350674
+end_time: 1717370492452
+entry_point_name: ''
+experiment_id: '816121003528278279'
+lifecycle_stage: deleted
+run_id: 0007768b33934087806e6cd249231fcb
+run_name: sedate-stag-171
+run_uuid: 0007768b33934087806e6cd249231fcb
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717370477059
+status: 3
+tags: []
+user_id: mona

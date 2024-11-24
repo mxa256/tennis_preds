@@ -1,0 +1,6 @@
+artifact_location: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/545417160078729357
+creation_time: 1717474046902
+experiment_id: '545417160078729357'
+last_update_time: 1717474046902
+lifecycle_stage: active
+name: 'Tennis_Preds: SVM Radial Kernel'

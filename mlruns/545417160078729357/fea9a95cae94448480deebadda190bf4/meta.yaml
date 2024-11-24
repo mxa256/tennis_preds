@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/545417160078729357/fea9a95cae94448480deebadda190bf4/artifacts
+end_time: 1717474809107
+entry_point_name: ''
+experiment_id: '545417160078729357'
+lifecycle_stage: active
+run_id: fea9a95cae94448480deebadda190bf4
+run_name: resilient-gnat-705
+run_uuid: fea9a95cae94448480deebadda190bf4
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717474790023
+status: 3
+tags: []
+user_id: mona

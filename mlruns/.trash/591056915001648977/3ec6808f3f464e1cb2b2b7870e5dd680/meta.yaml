@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/3ec6808f3f464e1cb2b2b7870e5dd680/artifacts
+deleted_time: 1717473348582
+end_time: 1717452710880
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: 3ec6808f3f464e1cb2b2b7870e5dd680
+run_name: omniscient-toad-257
+run_uuid: 3ec6808f3f464e1cb2b2b7870e5dd680
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717452688251
+status: 3
+tags: []
+user_id: mona

@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/652889466785021764/937edab5efbf4b7eae0ee79661ee100e/artifacts
+deleted_time: 1717451185146
+end_time: 1717450669276
+entry_point_name: ''
+experiment_id: '652889466785021764'
+lifecycle_stage: deleted
+run_id: 937edab5efbf4b7eae0ee79661ee100e
+run_name: charming-slug-121
+run_uuid: 937edab5efbf4b7eae0ee79661ee100e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717450659073
+status: 4
+tags: []
+user_id: mona

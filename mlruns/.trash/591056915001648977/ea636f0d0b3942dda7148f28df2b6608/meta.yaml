@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/ea636f0d0b3942dda7148f28df2b6608/artifacts
+deleted_time: 1717473348582
+end_time: 1717453228291
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: ea636f0d0b3942dda7148f28df2b6608
+run_name: bustling-skink-385
+run_uuid: ea636f0d0b3942dda7148f28df2b6608
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717453214424
+status: 3
+tags: []
+user_id: mona

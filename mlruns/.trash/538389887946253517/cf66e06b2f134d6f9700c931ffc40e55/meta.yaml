@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/538389887946253517/cf66e06b2f134d6f9700c931ffc40e55/artifacts
+deleted_time: 1717449430568
+end_time: 1717378001132
+entry_point_name: ''
+experiment_id: '538389887946253517'
+lifecycle_stage: deleted
+run_id: cf66e06b2f134d6f9700c931ffc40e55
+run_name: luminous-steed-750
+run_uuid: cf66e06b2f134d6f9700c931ffc40e55
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717377993692
+status: 3
+tags: []
+user_id: mona

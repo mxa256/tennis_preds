@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/765f4b8fe99949bc99f3b351b7460af0/artifacts
+deleted_time: 1717473348582
+end_time: 1717453131984
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: 765f4b8fe99949bc99f3b351b7460af0
+run_name: fortunate-goat-403
+run_uuid: 765f4b8fe99949bc99f3b351b7460af0
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717453104680
+status: 3
+tags: []
+user_id: mona

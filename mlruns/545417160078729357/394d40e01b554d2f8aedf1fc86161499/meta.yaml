@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/545417160078729357/394d40e01b554d2f8aedf1fc86161499/artifacts
+end_time: 1717475146286
+entry_point_name: ''
+experiment_id: '545417160078729357'
+lifecycle_stage: active
+run_id: 394d40e01b554d2f8aedf1fc86161499
+run_name: orderly-smelt-461
+run_uuid: 394d40e01b554d2f8aedf1fc86161499
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717475107994
+status: 3
+tags: []
+user_id: mona

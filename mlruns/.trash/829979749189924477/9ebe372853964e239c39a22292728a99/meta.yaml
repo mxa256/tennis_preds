@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/829979749189924477/9ebe372853964e239c39a22292728a99/artifacts
+deleted_time: 1717474020518
+end_time: 1717473656153
+entry_point_name: ''
+experiment_id: '829979749189924477'
+lifecycle_stage: deleted
+run_id: 9ebe372853964e239c39a22292728a99
+run_name: auspicious-boar-807
+run_uuid: 9ebe372853964e239c39a22292728a99
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717473640869
+status: 3
+tags: []
+user_id: mona

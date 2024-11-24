@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/d6404dfb897548029114afecb7cff63d/artifacts
+deleted_time: 1717473348582
+end_time: 1717452891834
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: d6404dfb897548029114afecb7cff63d
+run_name: rebellious-roo-41
+run_uuid: d6404dfb897548029114afecb7cff63d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717452878174
+status: 3
+tags: []
+user_id: mona

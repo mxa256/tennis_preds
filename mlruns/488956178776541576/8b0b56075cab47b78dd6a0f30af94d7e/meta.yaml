@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/8b0b56075cab47b78dd6a0f30af94d7e/artifacts
+end_time: 1717511386487
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 8b0b56075cab47b78dd6a0f30af94d7e
+run_name: funny-finch-306
+run_uuid: 8b0b56075cab47b78dd6a0f30af94d7e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511379552
+status: 3
+tags: []
+user_id: mona

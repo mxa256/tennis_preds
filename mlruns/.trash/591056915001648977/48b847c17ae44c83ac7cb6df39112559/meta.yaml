@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/48b847c17ae44c83ac7cb6df39112559/artifacts
+deleted_time: 1717473348582
+end_time: 1717452977320
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: 48b847c17ae44c83ac7cb6df39112559
+run_name: clean-skink-999
+run_uuid: 48b847c17ae44c83ac7cb6df39112559
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717452964519
+status: 3
+tags: []
+user_id: mona

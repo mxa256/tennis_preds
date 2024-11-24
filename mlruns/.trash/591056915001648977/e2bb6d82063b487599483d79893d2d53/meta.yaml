@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/e2bb6d82063b487599483d79893d2d53/artifacts
+deleted_time: 1717473348582
+end_time: 1717453383923
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: e2bb6d82063b487599483d79893d2d53
+run_name: peaceful-goat-209
+run_uuid: e2bb6d82063b487599483d79893d2d53
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717453363082
+status: 3
+tags: []
+user_id: mona

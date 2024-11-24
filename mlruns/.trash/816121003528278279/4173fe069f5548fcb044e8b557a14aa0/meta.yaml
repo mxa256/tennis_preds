@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/816121003528278279/4173fe069f5548fcb044e8b557a14aa0/artifacts
+deleted_time: 1717473350674
+end_time: 1717371460453
+entry_point_name: ''
+experiment_id: '816121003528278279'
+lifecycle_stage: deleted
+run_id: 4173fe069f5548fcb044e8b557a14aa0
+run_name: adaptable-bear-473
+run_uuid: 4173fe069f5548fcb044e8b557a14aa0
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717371407017
+status: 3
+tags: []
+user_id: mona

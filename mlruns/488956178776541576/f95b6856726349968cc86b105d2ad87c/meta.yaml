@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/f95b6856726349968cc86b105d2ad87c/artifacts
+end_time: 1717511087521
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: f95b6856726349968cc86b105d2ad87c
+run_name: wise-grub-115
+run_uuid: f95b6856726349968cc86b105d2ad87c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511079899
+status: 3
+tags: []
+user_id: mona

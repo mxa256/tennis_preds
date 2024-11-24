@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/652889466785021764/8e47fd0e9eaf49c79559db7ecd790b0e/artifacts
+deleted_time: 1717451185146
+end_time: 1717450030955
+entry_point_name: ''
+experiment_id: '652889466785021764'
+lifecycle_stage: deleted
+run_id: 8e47fd0e9eaf49c79559db7ecd790b0e
+run_name: smiling-whale-135
+run_uuid: 8e47fd0e9eaf49c79559db7ecd790b0e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717450009133
+status: 4
+tags: []
+user_id: mona

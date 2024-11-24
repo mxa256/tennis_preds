@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/603881769470341017/5185b53b22024a4783c2dbda8ec85b74/artifacts
+deleted_time: 1717370048697
+end_time: 1717369310573
+entry_point_name: ''
+experiment_id: '603881769470341017'
+lifecycle_stage: deleted
+run_id: 5185b53b22024a4783c2dbda8ec85b74
+run_name: clumsy-cat-53
+run_uuid: 5185b53b22024a4783c2dbda8ec85b74
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717369303449
+status: 3
+tags: []
+user_id: mona

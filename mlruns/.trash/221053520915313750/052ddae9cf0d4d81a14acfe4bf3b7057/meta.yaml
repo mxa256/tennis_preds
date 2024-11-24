@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/052ddae9cf0d4d81a14acfe4bf3b7057/artifacts
+deleted_time: 1717477720129
+end_time: 1717475505617
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: 052ddae9cf0d4d81a14acfe4bf3b7057
+run_name: classy-frog-289
+run_uuid: 052ddae9cf0d4d81a14acfe4bf3b7057
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717475496971
+status: 3
+tags: []
+user_id: mona

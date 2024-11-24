@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/ca9cb72f9f7d4d07a600cfd2d7bbe213/artifacts
+end_time: 1717511657859
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: ca9cb72f9f7d4d07a600cfd2d7bbe213
+run_name: rebellious-vole-360
+run_uuid: ca9cb72f9f7d4d07a600cfd2d7bbe213
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511650619
+status: 3
+tags: []
+user_id: mona

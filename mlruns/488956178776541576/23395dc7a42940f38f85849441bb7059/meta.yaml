@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/23395dc7a42940f38f85849441bb7059/artifacts
+end_time: 1717511343448
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 23395dc7a42940f38f85849441bb7059
+run_name: stylish-gull-91
+run_uuid: 23395dc7a42940f38f85849441bb7059
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511336191
+status: 3
+tags: []
+user_id: mona

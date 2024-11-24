@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/925d4528b5fd486fba7011064640d957/artifacts
+end_time: 1717511739997
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 925d4528b5fd486fba7011064640d957
+run_name: receptive-wolf-175
+run_uuid: 925d4528b5fd486fba7011064640d957
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511733056
+status: 3
+tags: []
+user_id: mona

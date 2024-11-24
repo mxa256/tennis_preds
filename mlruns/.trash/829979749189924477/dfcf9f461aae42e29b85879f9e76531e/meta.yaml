@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/829979749189924477/dfcf9f461aae42e29b85879f9e76531e/artifacts
+deleted_time: 1717474020518
+end_time: 1717473640838
+entry_point_name: ''
+experiment_id: '829979749189924477'
+lifecycle_stage: deleted
+run_id: dfcf9f461aae42e29b85879f9e76531e
+run_name: gregarious-skink-455
+run_uuid: dfcf9f461aae42e29b85879f9e76531e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717473624940
+status: 3
+tags: []
+user_id: mona

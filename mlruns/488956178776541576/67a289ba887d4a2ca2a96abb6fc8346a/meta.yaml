@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/67a289ba887d4a2ca2a96abb6fc8346a/artifacts
+end_time: 1717511212189
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 67a289ba887d4a2ca2a96abb6fc8346a
+run_name: amusing-ape-475
+run_uuid: 67a289ba887d4a2ca2a96abb6fc8346a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511204014
+status: 3
+tags: []
+user_id: mona

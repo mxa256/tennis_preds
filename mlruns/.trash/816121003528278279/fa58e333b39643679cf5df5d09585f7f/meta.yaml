@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/816121003528278279/fa58e333b39643679cf5df5d09585f7f/artifacts
+deleted_time: 1717473350674
+end_time: 1717370914221
+entry_point_name: ''
+experiment_id: '816121003528278279'
+lifecycle_stage: deleted
+run_id: fa58e333b39643679cf5df5d09585f7f
+run_name: bold-mole-608
+run_uuid: fa58e333b39643679cf5df5d09585f7f
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717370879862
+status: 3
+tags: []
+user_id: mona

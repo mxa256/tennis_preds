@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/652889466785021764/b1077959a241445b8eddf926dced12a7/artifacts
+deleted_time: 1717451185146
+end_time: 1717450238000
+entry_point_name: ''
+experiment_id: '652889466785021764'
+lifecycle_stage: deleted
+run_id: b1077959a241445b8eddf926dced12a7
+run_name: whimsical-bear-981
+run_uuid: b1077959a241445b8eddf926dced12a7
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717450226888
+status: 4
+tags: []
+user_id: mona

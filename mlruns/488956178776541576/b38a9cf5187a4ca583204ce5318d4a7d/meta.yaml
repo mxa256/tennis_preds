@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/b38a9cf5187a4ca583204ce5318d4a7d/artifacts
+end_time: 1717511407357
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: b38a9cf5187a4ca583204ce5318d4a7d
+run_name: indecisive-robin-610
+run_uuid: b38a9cf5187a4ca583204ce5318d4a7d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511400221
+status: 3
+tags: []
+user_id: mona

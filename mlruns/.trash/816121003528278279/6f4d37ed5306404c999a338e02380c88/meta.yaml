@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/816121003528278279/6f4d37ed5306404c999a338e02380c88/artifacts
+deleted_time: 1717473350674
+end_time: 1717371406996
+entry_point_name: ''
+experiment_id: '816121003528278279'
+lifecycle_stage: deleted
+run_id: 6f4d37ed5306404c999a338e02380c88
+run_name: polite-conch-54
+run_uuid: 6f4d37ed5306404c999a338e02380c88
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717371223656
+status: 3
+tags: []
+user_id: mona

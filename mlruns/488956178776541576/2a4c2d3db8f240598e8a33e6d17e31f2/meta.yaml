@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/2a4c2d3db8f240598e8a33e6d17e31f2/artifacts
+end_time: 1717511576447
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 2a4c2d3db8f240598e8a33e6d17e31f2
+run_name: fearless-panda-160
+run_uuid: 2a4c2d3db8f240598e8a33e6d17e31f2
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511568675
+status: 3
+tags: []
+user_id: mona

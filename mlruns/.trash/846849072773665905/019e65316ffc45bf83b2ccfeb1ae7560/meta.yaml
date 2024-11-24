@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/846849072773665905/019e65316ffc45bf83b2ccfeb1ae7560/artifacts
+deleted_time: 1717531976370
+end_time: 1717516811485
+entry_point_name: ''
+experiment_id: '846849072773665905'
+lifecycle_stage: deleted
+run_id: 019e65316ffc45bf83b2ccfeb1ae7560
+run_name: dapper-skunk-519
+run_uuid: 019e65316ffc45bf83b2ccfeb1ae7560
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717516811422
+status: 4
+tags: []
+user_id: mona

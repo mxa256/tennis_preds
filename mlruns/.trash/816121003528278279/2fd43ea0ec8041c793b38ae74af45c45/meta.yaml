@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/816121003528278279/2fd43ea0ec8041c793b38ae74af45c45/artifacts
+deleted_time: 1717473350674
+end_time: 1717371480644
+entry_point_name: ''
+experiment_id: '816121003528278279'
+lifecycle_stage: deleted
+run_id: 2fd43ea0ec8041c793b38ae74af45c45
+run_name: trusting-croc-346
+run_uuid: 2fd43ea0ec8041c793b38ae74af45c45
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717371460474
+status: 3
+tags: []
+user_id: mona

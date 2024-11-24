@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/816121003528278279/ad5d7afe8dd247ca9f982f7f5c2f6669/artifacts
+deleted_time: 1717473350674
+end_time: 1717370730816
+entry_point_name: ''
+experiment_id: '816121003528278279'
+lifecycle_stage: deleted
+run_id: ad5d7afe8dd247ca9f982f7f5c2f6669
+run_name: monumental-smelt-376
+run_uuid: ad5d7afe8dd247ca9f982f7f5c2f6669
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717370714284
+status: 3
+tags: []
+user_id: mona

@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/5571e3e8b3bf47e3ad1901e6832a1e03/artifacts
+deleted_time: 1717473348582
+end_time: 1717452865988
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: 5571e3e8b3bf47e3ad1901e6832a1e03
+run_name: intelligent-ox-868
+run_uuid: 5571e3e8b3bf47e3ad1901e6832a1e03
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717452854937
+status: 3
+tags: []
+user_id: mona

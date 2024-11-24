@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/816121003528278279/ba1acc1662934230bd53e164574caaae/artifacts
+deleted_time: 1717473350674
+end_time: 1717370619197
+entry_point_name: ''
+experiment_id: '816121003528278279'
+lifecycle_stage: deleted
+run_id: ba1acc1662934230bd53e164574caaae
+run_name: bustling-cat-301
+run_uuid: ba1acc1662934230bd53e164574caaae
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717370581088
+status: 3
+tags: []
+user_id: mona

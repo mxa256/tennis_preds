@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/545417160078729357/8b7ceae9261e47ea8daa3aca305b90ac/artifacts
+end_time: 1717475033988
+entry_point_name: ''
+experiment_id: '545417160078729357'
+lifecycle_stage: active
+run_id: 8b7ceae9261e47ea8daa3aca305b90ac
+run_name: enthused-squid-323
+run_uuid: 8b7ceae9261e47ea8daa3aca305b90ac
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717474848259
+status: 3
+tags: []
+user_id: mona

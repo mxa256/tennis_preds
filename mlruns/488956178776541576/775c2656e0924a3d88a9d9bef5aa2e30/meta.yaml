@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/775c2656e0924a3d88a9d9bef5aa2e30/artifacts
+end_time: 1717511768124
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 775c2656e0924a3d88a9d9bef5aa2e30
+run_name: handsome-vole-658
+run_uuid: 775c2656e0924a3d88a9d9bef5aa2e30
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511760928
+status: 3
+tags: []
+user_id: mona

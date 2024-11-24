@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/ab034c5cdb4946adb4c734413cf8062b/artifacts
+end_time: 1717511590416
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: ab034c5cdb4946adb4c734413cf8062b
+run_name: sassy-sponge-538
+run_uuid: ab034c5cdb4946adb4c734413cf8062b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511583265
+status: 3
+tags: []
+user_id: mona

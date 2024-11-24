@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/652889466785021764/fec81a0f65f347dd99d84566e2751946/artifacts
+deleted_time: 1717451185146
+end_time: 1717450161564
+entry_point_name: ''
+experiment_id: '652889466785021764'
+lifecycle_stage: deleted
+run_id: fec81a0f65f347dd99d84566e2751946
+run_name: kindly-panda-28
+run_uuid: fec81a0f65f347dd99d84566e2751946
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717450148985
+status: 4
+tags: []
+user_id: mona

@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/86e6d81cd92c4d08b9ae8b2805375a42/artifacts
+deleted_time: 1717477720129
+end_time: 1717476479218
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: 86e6d81cd92c4d08b9ae8b2805375a42
+run_name: inquisitive-loon-400
+run_uuid: 86e6d81cd92c4d08b9ae8b2805375a42
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717476469142
+status: 3
+tags: []
+user_id: mona

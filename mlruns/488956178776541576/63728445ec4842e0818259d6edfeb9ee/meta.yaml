@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/63728445ec4842e0818259d6edfeb9ee/artifacts
+end_time: 1717511055331
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 63728445ec4842e0818259d6edfeb9ee
+run_name: salty-mole-413
+run_uuid: 63728445ec4842e0818259d6edfeb9ee
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511047084
+status: 3
+tags: []
+user_id: mona

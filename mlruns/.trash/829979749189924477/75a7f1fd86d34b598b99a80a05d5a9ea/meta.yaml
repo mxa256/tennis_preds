@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/829979749189924477/75a7f1fd86d34b598b99a80a05d5a9ea/artifacts
+deleted_time: 1717474020518
+end_time: 1717473624920
+entry_point_name: ''
+experiment_id: '829979749189924477'
+lifecycle_stage: deleted
+run_id: 75a7f1fd86d34b598b99a80a05d5a9ea
+run_name: defiant-bass-283
+run_uuid: 75a7f1fd86d34b598b99a80a05d5a9ea
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717473602587
+status: 3
+tags: []
+user_id: mona

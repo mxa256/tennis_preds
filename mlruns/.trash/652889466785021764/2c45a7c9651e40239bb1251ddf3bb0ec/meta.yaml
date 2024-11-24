@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/652889466785021764/2c45a7c9651e40239bb1251ddf3bb0ec/artifacts
+deleted_time: 1717451185146
+end_time: 1717450270556
+entry_point_name: ''
+experiment_id: '652889466785021764'
+lifecycle_stage: deleted
+run_id: 2c45a7c9651e40239bb1251ddf3bb0ec
+run_name: vaunted-sponge-913
+run_uuid: 2c45a7c9651e40239bb1251ddf3bb0ec
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717450252964
+status: 4
+tags: []
+user_id: mona

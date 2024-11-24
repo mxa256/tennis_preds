@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/ad6cdf0ecf6e4348b7c5dbe8180867c2/artifacts
+end_time: 1717511294300
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: ad6cdf0ecf6e4348b7c5dbe8180867c2
+run_name: luminous-loon-7
+run_uuid: ad6cdf0ecf6e4348b7c5dbe8180867c2
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511286525
+status: 3
+tags: []
+user_id: mona

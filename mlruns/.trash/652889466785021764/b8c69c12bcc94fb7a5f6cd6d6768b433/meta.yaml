@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/652889466785021764/b8c69c12bcc94fb7a5f6cd6d6768b433/artifacts
+deleted_time: 1717451185146
+end_time: 1717449875265
+entry_point_name: ''
+experiment_id: '652889466785021764'
+lifecycle_stage: deleted
+run_id: b8c69c12bcc94fb7a5f6cd6d6768b433
+run_name: traveling-shoat-465
+run_uuid: b8c69c12bcc94fb7a5f6cd6d6768b433
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717449860998
+status: 4
+tags: []
+user_id: mona

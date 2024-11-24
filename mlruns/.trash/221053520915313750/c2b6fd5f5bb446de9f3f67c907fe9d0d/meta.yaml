@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/c2b6fd5f5bb446de9f3f67c907fe9d0d/artifacts
+deleted_time: 1717477720129
+end_time: 1717475524403
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: c2b6fd5f5bb446de9f3f67c907fe9d0d
+run_name: abrasive-jay-863
+run_uuid: c2b6fd5f5bb446de9f3f67c907fe9d0d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717475514766
+status: 3
+tags: []
+user_id: mona

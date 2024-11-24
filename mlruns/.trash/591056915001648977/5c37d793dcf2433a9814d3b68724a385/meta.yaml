@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/5c37d793dcf2433a9814d3b68724a385/artifacts
+deleted_time: 1717473348582
+end_time: 1717452403221
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: 5c37d793dcf2433a9814d3b68724a385
+run_name: powerful-gnat-433
+run_uuid: 5c37d793dcf2433a9814d3b68724a385
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717452378747
+status: 3
+tags: []
+user_id: mona

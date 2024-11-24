@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/6011e7dcb5914a5c8e76a72299b70632/artifacts
+end_time: 1717511544452
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 6011e7dcb5914a5c8e76a72299b70632
+run_name: adorable-yak-577
+run_uuid: 6011e7dcb5914a5c8e76a72299b70632
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511537194
+status: 3
+tags: []
+user_id: mona

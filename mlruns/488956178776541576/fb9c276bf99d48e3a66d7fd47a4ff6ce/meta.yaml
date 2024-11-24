@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/fb9c276bf99d48e3a66d7fd47a4ff6ce/artifacts
+end_time: 1717511664849
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: fb9c276bf99d48e3a66d7fd47a4ff6ce
+run_name: grandiose-sheep-836
+run_uuid: fb9c276bf99d48e3a66d7fd47a4ff6ce
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511657884
+status: 3
+tags: []
+user_id: mona

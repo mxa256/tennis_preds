@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/3629a024619349dba5ed93d57bc95b45/artifacts
+end_time: 1717511708860
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 3629a024619349dba5ed93d57bc95b45
+run_name: dashing-wren-624
+run_uuid: 3629a024619349dba5ed93d57bc95b45
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511701902
+status: 3
+tags: []
+user_id: mona

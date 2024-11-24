@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/c9978c1fe8eb481185acdff3c8cf0df0/artifacts
+deleted_time: 1717477720129
+end_time: 1717475982315
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: c9978c1fe8eb481185acdff3c8cf0df0
+run_name: handsome-stoat-933
+run_uuid: c9978c1fe8eb481185acdff3c8cf0df0
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717475973012
+status: 3
+tags: []
+user_id: mona

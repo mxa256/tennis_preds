@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/b935accc405c4bec990038afd9ae8601/artifacts
+end_time: 1717511614807
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: b935accc405c4bec990038afd9ae8601
+run_name: tasteful-fawn-290
+run_uuid: b935accc405c4bec990038afd9ae8601
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511605014
+status: 3
+tags: []
+user_id: mona

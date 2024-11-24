@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/be3b14d38c1540678209115a984099f9/artifacts
+deleted_time: 1717477720129
+end_time: 1717476099165
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: be3b14d38c1540678209115a984099f9
+run_name: enthused-toad-192
+run_uuid: be3b14d38c1540678209115a984099f9
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717476085876
+status: 3
+tags: []
+user_id: mona

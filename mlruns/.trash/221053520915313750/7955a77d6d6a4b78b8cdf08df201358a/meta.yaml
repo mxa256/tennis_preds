@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/7955a77d6d6a4b78b8cdf08df201358a/artifacts
+deleted_time: 1717477720129
+end_time: 1717475534653
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: 7955a77d6d6a4b78b8cdf08df201358a
+run_name: judicious-snake-136
+run_uuid: 7955a77d6d6a4b78b8cdf08df201358a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717475524436
+status: 3
+tags: []
+user_id: mona

@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/53fd954c437d475892cc23f81f176e4c/artifacts
+end_time: 1717511530147
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 53fd954c437d475892cc23f81f176e4c
+run_name: crawling-foal-119
+run_uuid: 53fd954c437d475892cc23f81f176e4c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511523436
+status: 3
+tags: []
+user_id: mona

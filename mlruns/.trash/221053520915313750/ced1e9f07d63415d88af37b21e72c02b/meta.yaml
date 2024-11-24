@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/ced1e9f07d63415d88af37b21e72c02b/artifacts
+deleted_time: 1717477720129
+end_time: 1717476263002
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: ced1e9f07d63415d88af37b21e72c02b
+run_name: charming-stag-878
+run_uuid: ced1e9f07d63415d88af37b21e72c02b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717476253764
+status: 3
+tags: []
+user_id: mona

@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/87ebe8cedc2643f397ea8f42d3ab72c8/artifacts
+deleted_time: 1717473348582
+end_time: 1717453015650
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: 87ebe8cedc2643f397ea8f42d3ab72c8
+run_name: persistent-stag-110
+run_uuid: 87ebe8cedc2643f397ea8f42d3ab72c8
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717452994948
+status: 3
+tags: []
+user_id: mona

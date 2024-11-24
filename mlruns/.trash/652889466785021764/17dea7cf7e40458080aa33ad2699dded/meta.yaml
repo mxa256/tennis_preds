@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/652889466785021764/17dea7cf7e40458080aa33ad2699dded/artifacts
+deleted_time: 1717451185146
+end_time: 1717449514081
+entry_point_name: ''
+experiment_id: '652889466785021764'
+lifecycle_stage: deleted
+run_id: 17dea7cf7e40458080aa33ad2699dded
+run_name: welcoming-wasp-296
+run_uuid: 17dea7cf7e40458080aa33ad2699dded
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717449504739
+status: 4
+tags: []
+user_id: mona

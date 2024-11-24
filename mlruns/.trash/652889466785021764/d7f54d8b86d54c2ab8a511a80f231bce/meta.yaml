@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/652889466785021764/d7f54d8b86d54c2ab8a511a80f231bce/artifacts
+deleted_time: 1717451185146
+end_time: 1717449620040
+entry_point_name: ''
+experiment_id: '652889466785021764'
+lifecycle_stage: deleted
+run_id: d7f54d8b86d54c2ab8a511a80f231bce
+run_name: traveling-moth-433
+run_uuid: d7f54d8b86d54c2ab8a511a80f231bce
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717449608904
+status: 4
+tags: []
+user_id: mona

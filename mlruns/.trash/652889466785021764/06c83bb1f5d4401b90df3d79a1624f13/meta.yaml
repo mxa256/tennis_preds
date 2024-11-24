@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/652889466785021764/06c83bb1f5d4401b90df3d79a1624f13/artifacts
+deleted_time: 1717451185146
+end_time: 1717450620605
+entry_point_name: ''
+experiment_id: '652889466785021764'
+lifecycle_stage: deleted
+run_id: 06c83bb1f5d4401b90df3d79a1624f13
+run_name: skittish-crab-565
+run_uuid: 06c83bb1f5d4401b90df3d79a1624f13
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717450600110
+status: 4
+tags: []
+user_id: mona

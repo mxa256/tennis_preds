@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/4754b415ca8a4a65840146983afd94ff/artifacts
+deleted_time: 1717477720129
+end_time: 1717475553678
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: 4754b415ca8a4a65840146983afd94ff
+run_name: lyrical-vole-638
+run_uuid: 4754b415ca8a4a65840146983afd94ff
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717475543521
+status: 3
+tags: []
+user_id: mona

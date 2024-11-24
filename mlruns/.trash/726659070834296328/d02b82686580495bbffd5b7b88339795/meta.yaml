@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/726659070834296328/d02b82686580495bbffd5b7b88339795/artifacts
+deleted_time: 1717473483036
+end_time: null
+entry_point_name: ''
+experiment_id: '726659070834296328'
+lifecycle_stage: deleted
+run_id: d02b82686580495bbffd5b7b88339795
+run_name: judicious-stork-889
+run_uuid: d02b82686580495bbffd5b7b88339795
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717473430918
+status: 1
+tags: []
+user_id: mona

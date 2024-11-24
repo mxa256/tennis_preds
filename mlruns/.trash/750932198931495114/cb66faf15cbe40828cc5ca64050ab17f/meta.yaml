@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/750932198931495114/cb66faf15cbe40828cc5ca64050ab17f/artifacts
+deleted_time: 1717370406485
+end_time: 1717370349877
+entry_point_name: ''
+experiment_id: '750932198931495114'
+lifecycle_stage: deleted
+run_id: cb66faf15cbe40828cc5ca64050ab17f
+run_name: vaunted-lamb-618
+run_uuid: cb66faf15cbe40828cc5ca64050ab17f
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717370326728
+status: 3
+tags: []
+user_id: mona

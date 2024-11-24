@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/e83b36dd29d14b1886b80c89ff116e90/artifacts
+deleted_time: 1717473348582
+end_time: 1717453312398
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: e83b36dd29d14b1886b80c89ff116e90
+run_name: wistful-chimp-755
+run_uuid: e83b36dd29d14b1886b80c89ff116e90
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717453296657
+status: 3
+tags: []
+user_id: mona

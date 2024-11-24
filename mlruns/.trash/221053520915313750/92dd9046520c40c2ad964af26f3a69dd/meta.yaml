@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/92dd9046520c40c2ad964af26f3a69dd/artifacts
+deleted_time: 1717477720129
+end_time: 1717476627917
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: 92dd9046520c40c2ad964af26f3a69dd
+run_name: loud-frog-861
+run_uuid: 92dd9046520c40c2ad964af26f3a69dd
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717476611883
+status: 3
+tags: []
+user_id: mona

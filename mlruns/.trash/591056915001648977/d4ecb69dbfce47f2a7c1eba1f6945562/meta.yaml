@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/d4ecb69dbfce47f2a7c1eba1f6945562/artifacts
+deleted_time: 1717473348582
+end_time: 1717453054792
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: d4ecb69dbfce47f2a7c1eba1f6945562
+run_name: chill-steed-822
+run_uuid: d4ecb69dbfce47f2a7c1eba1f6945562
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717453037040
+status: 3
+tags: []
+user_id: mona

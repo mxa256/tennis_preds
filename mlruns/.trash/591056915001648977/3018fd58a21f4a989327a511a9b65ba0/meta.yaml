@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/3018fd58a21f4a989327a511a9b65ba0/artifacts
+deleted_time: 1717473348582
+end_time: 1717452162075
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: 3018fd58a21f4a989327a511a9b65ba0
+run_name: brawny-rat-207
+run_uuid: 3018fd58a21f4a989327a511a9b65ba0
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717452150924
+status: 3
+tags: []
+user_id: mona

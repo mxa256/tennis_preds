@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/4246a847e7fc4a63a545d3c9f8c3a872/artifacts
+deleted_time: 1717473348582
+end_time: 1717452667947
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: 4246a847e7fc4a63a545d3c9f8c3a872
+run_name: adorable-shark-940
+run_uuid: 4246a847e7fc4a63a545d3c9f8c3a872
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717452650838
+status: 3
+tags: []
+user_id: mona

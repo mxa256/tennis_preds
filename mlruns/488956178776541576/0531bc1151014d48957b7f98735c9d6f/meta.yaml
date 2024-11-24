@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/0531bc1151014d48957b7f98735c9d6f/artifacts
+end_time: 1717511733040
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 0531bc1151014d48957b7f98735c9d6f
+run_name: abrasive-skink-260
+run_uuid: 0531bc1151014d48957b7f98735c9d6f
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511722886
+status: 3
+tags: []
+user_id: mona

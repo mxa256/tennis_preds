@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/829979749189924477/4643f349158f46eba6027939f506d69a/artifacts
+deleted_time: 1717474020518
+end_time: 1717473764731
+entry_point_name: ''
+experiment_id: '829979749189924477'
+lifecycle_stage: deleted
+run_id: 4643f349158f46eba6027939f506d69a
+run_name: redolent-squid-113
+run_uuid: 4643f349158f46eba6027939f506d69a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717473695106
+status: 3
+tags: []
+user_id: mona

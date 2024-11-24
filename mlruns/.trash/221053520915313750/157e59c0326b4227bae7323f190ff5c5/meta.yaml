@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/157e59c0326b4227bae7323f190ff5c5/artifacts
+deleted_time: 1717477720129
+end_time: 1717475469063
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: 157e59c0326b4227bae7323f190ff5c5
+run_name: languid-shrike-593
+run_uuid: 157e59c0326b4227bae7323f190ff5c5
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717475460609
+status: 3
+tags: []
+user_id: mona

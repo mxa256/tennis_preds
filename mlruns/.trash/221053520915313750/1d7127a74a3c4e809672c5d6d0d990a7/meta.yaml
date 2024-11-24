@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/1d7127a74a3c4e809672c5d6d0d990a7/artifacts
+deleted_time: 1717477720129
+end_time: 1717475565348
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: 1d7127a74a3c4e809672c5d6d0d990a7
+run_name: painted-bird-291
+run_uuid: 1d7127a74a3c4e809672c5d6d0d990a7
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717475553696
+status: 3
+tags: []
+user_id: mona

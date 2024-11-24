@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/5275b117fe0040de8481512903de65ba/artifacts
+deleted_time: 1717477720129
+end_time: 1717476284151
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: 5275b117fe0040de8481512903de65ba
+run_name: thundering-kit-737
+run_uuid: 5275b117fe0040de8481512903de65ba
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717476273364
+status: 3
+tags: []
+user_id: mona

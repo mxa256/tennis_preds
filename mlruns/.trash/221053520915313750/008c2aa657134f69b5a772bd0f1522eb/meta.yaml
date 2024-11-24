@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/008c2aa657134f69b5a772bd0f1522eb/artifacts
+deleted_time: 1717477720129
+end_time: 1717476532357
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: 008c2aa657134f69b5a772bd0f1522eb
+run_name: glamorous-snail-123
+run_uuid: 008c2aa657134f69b5a772bd0f1522eb
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717476522519
+status: 3
+tags: []
+user_id: mona

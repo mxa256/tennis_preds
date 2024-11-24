@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/75e8d7364faf4cc3867982a50610515f/artifacts
+deleted_time: 1717477720129
+end_time: 1717475680518
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: 75e8d7364faf4cc3867982a50610515f
+run_name: adorable-donkey-418
+run_uuid: 75e8d7364faf4cc3867982a50610515f
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717475658746
+status: 3
+tags: []
+user_id: mona

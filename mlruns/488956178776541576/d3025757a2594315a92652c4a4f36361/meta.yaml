@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/d3025757a2594315a92652c4a4f36361/artifacts
+end_time: 1717511359995
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: d3025757a2594315a92652c4a4f36361
+run_name: casual-ape-893
+run_uuid: d3025757a2594315a92652c4a4f36361
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511351571
+status: 3
+tags: []
+user_id: mona

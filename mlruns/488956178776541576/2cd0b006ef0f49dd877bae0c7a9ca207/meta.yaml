@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/2cd0b006ef0f49dd877bae0c7a9ca207/artifacts
+end_time: 1717511461520
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 2cd0b006ef0f49dd877bae0c7a9ca207
+run_name: upset-bird-384
+run_uuid: 2cd0b006ef0f49dd877bae0c7a9ca207
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511454919
+status: 3
+tags: []
+user_id: mona

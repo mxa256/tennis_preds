@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/516a6332ed7441b794ee83bd6e456286/artifacts
+end_time: 1717511715803
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 516a6332ed7441b794ee83bd6e456286
+run_name: languid-perch-972
+run_uuid: 516a6332ed7441b794ee83bd6e456286
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511708881
+status: 3
+tags: []
+user_id: mona

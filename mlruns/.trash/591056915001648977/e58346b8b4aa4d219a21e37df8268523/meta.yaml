@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/e58346b8b4aa4d219a21e37df8268523/artifacts
+deleted_time: 1717473348582
+end_time: 1717453564706
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: e58346b8b4aa4d219a21e37df8268523
+run_name: colorful-owl-140
+run_uuid: e58346b8b4aa4d219a21e37df8268523
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717453550498
+status: 3
+tags: []
+user_id: mona

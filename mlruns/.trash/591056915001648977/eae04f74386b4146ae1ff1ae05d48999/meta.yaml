@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/eae04f74386b4146ae1ff1ae05d48999/artifacts
+deleted_time: 1717473348582
+end_time: 1717452512252
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: eae04f74386b4146ae1ff1ae05d48999
+run_name: youthful-bug-143
+run_uuid: eae04f74386b4146ae1ff1ae05d48999
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717452500391
+status: 3
+tags: []
+user_id: mona

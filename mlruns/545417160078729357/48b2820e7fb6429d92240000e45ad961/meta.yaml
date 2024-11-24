@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/545417160078729357/48b2820e7fb6429d92240000e45ad961/artifacts
+end_time: 1717474070990
+entry_point_name: ''
+experiment_id: '545417160078729357'
+lifecycle_stage: active
+run_id: 48b2820e7fb6429d92240000e45ad961
+run_name: gaudy-carp-674
+run_uuid: 48b2820e7fb6429d92240000e45ad961
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717474047002
+status: 3
+tags: []
+user_id: mona

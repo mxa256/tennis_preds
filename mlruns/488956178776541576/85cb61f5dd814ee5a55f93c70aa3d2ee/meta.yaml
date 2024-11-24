@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/85cb61f5dd814ee5a55f93c70aa3d2ee/artifacts
+end_time: 1717511775100
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 85cb61f5dd814ee5a55f93c70aa3d2ee
+run_name: capable-skink-534
+run_uuid: 85cb61f5dd814ee5a55f93c70aa3d2ee
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511768145
+status: 3
+tags: []
+user_id: mona

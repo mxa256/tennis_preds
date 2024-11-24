@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/27e334ce314b4815b60df837b3d44a53/artifacts
+deleted_time: 1717477720129
+end_time: 1717475543472
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: 27e334ce314b4815b60df837b3d44a53
+run_name: merciful-owl-103
+run_uuid: 27e334ce314b4815b60df837b3d44a53
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717475534678
+status: 3
+tags: []
+user_id: mona

@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/564a80d7e9f9424cbda6098136dd85fe/artifacts
+deleted_time: 1717473348582
+end_time: 1717453188733
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: 564a80d7e9f9424cbda6098136dd85fe
+run_name: glamorous-hog-634
+run_uuid: 564a80d7e9f9424cbda6098136dd85fe
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717453177902
+status: 3
+tags: []
+user_id: mona

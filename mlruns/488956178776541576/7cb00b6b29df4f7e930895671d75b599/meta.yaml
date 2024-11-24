@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/7cb00b6b29df4f7e930895671d75b599/artifacts
+end_time: 1717511561277
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 7cb00b6b29df4f7e930895671d75b599
+run_name: polite-fowl-123
+run_uuid: 7cb00b6b29df4f7e930895671d75b599
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511554401
+status: 3
+tags: []
+user_id: mona

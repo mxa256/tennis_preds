@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/17c39787401d46f5b23e852e0e62fe1c/artifacts
+deleted_time: 1717473348582
+end_time: 1717453329747
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: 17c39787401d46f5b23e852e0e62fe1c
+run_name: mysterious-horse-685
+run_uuid: 17c39787401d46f5b23e852e0e62fe1c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717453312420
+status: 3
+tags: []
+user_id: mona

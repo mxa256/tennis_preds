@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/c4921db3fcf4470395889d59bbf669bf/artifacts
+deleted_time: 1717477720129
+end_time: 1717476021905
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: c4921db3fcf4470395889d59bbf669bf
+run_name: sneaky-lamb-198
+run_uuid: c4921db3fcf4470395889d59bbf669bf
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717476011020
+status: 3
+tags: []
+user_id: mona

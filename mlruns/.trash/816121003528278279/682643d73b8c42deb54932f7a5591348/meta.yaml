@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/816121003528278279/682643d73b8c42deb54932f7a5591348/artifacts
+deleted_time: 1717473350674
+end_time: 1717371163449
+entry_point_name: ''
+experiment_id: '816121003528278279'
+lifecycle_stage: deleted
+run_id: 682643d73b8c42deb54932f7a5591348
+run_name: agreeable-eel-616
+run_uuid: 682643d73b8c42deb54932f7a5591348
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717371119792
+status: 3
+tags: []
+user_id: mona

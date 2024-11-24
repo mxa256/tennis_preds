@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/bbbfdc04ffa246ab99cc2008f8390df9/artifacts
+end_time: 1717511604989
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: bbbfdc04ffa246ab99cc2008f8390df9
+run_name: upbeat-koi-15
+run_uuid: bbbfdc04ffa246ab99cc2008f8390df9
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511597695
+status: 3
+tags: []
+user_id: mona

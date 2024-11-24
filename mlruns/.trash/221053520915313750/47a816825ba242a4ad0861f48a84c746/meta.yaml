@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/47a816825ba242a4ad0861f48a84c746/artifacts
+deleted_time: 1717477720129
+end_time: 1717475972836
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: 47a816825ba242a4ad0861f48a84c746
+run_name: merciful-rat-265
+run_uuid: 47a816825ba242a4ad0861f48a84c746
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717475963113
+status: 3
+tags: []
+user_id: mona

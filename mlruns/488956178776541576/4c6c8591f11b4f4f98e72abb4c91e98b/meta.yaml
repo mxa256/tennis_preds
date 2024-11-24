@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/4c6c8591f11b4f4f98e72abb4c91e98b/artifacts
+end_time: 1717511258089
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 4c6c8591f11b4f4f98e72abb4c91e98b
+run_name: adventurous-newt-360
+run_uuid: 4c6c8591f11b4f4f98e72abb4c91e98b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511250738
+status: 3
+tags: []
+user_id: mona

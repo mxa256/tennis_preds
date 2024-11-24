@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/652889466785021764/0f68c99236874358bf53bdcdf8a55ca6/artifacts
+deleted_time: 1717451185146
+end_time: 1717450391709
+entry_point_name: ''
+experiment_id: '652889466785021764'
+lifecycle_stage: deleted
+run_id: 0f68c99236874358bf53bdcdf8a55ca6
+run_name: unruly-doe-244
+run_uuid: 0f68c99236874358bf53bdcdf8a55ca6
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717450381124
+status: 4
+tags: []
+user_id: mona

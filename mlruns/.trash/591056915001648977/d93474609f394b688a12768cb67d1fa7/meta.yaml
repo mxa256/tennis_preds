@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/d93474609f394b688a12768cb67d1fa7/artifacts
+deleted_time: 1717473348582
+end_time: 1717453525233
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: d93474609f394b688a12768cb67d1fa7
+run_name: agreeable-ape-524
+run_uuid: d93474609f394b688a12768cb67d1fa7
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717453511839
+status: 3
+tags: []
+user_id: mona

@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/faa2191c289a4cedb61f3696ad9e3c48/artifacts
+deleted_time: 1717473348582
+end_time: 1717453200966
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: faa2191c289a4cedb61f3696ad9e3c48
+run_name: monumental-ray-764
+run_uuid: faa2191c289a4cedb61f3696ad9e3c48
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717453188754
+status: 3
+tags: []
+user_id: mona

@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/b35c39b11faf4fb1835bb740e970dcb4/artifacts
+deleted_time: 1717473348582
+end_time: 1717453037009
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: b35c39b11faf4fb1835bb740e970dcb4
+run_name: mysterious-cod-489
+run_uuid: b35c39b11faf4fb1835bb740e970dcb4
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717453015673
+status: 3
+tags: []
+user_id: mona

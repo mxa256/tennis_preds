@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/829979749189924477/beeb0b18f1424616b71057d37cb72a4e/artifacts
+deleted_time: 1717474020518
+end_time: 1717473954981
+entry_point_name: ''
+experiment_id: '829979749189924477'
+lifecycle_stage: deleted
+run_id: beeb0b18f1424616b71057d37cb72a4e
+run_name: receptive-conch-402
+run_uuid: beeb0b18f1424616b71057d37cb72a4e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717473844949
+status: 3
+tags: []
+user_id: mona

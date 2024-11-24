@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/652889466785021764/1c58233859364be982d218791be49c78/artifacts
+deleted_time: 1717451185146
+end_time: 1717450733390
+entry_point_name: ''
+experiment_id: '652889466785021764'
+lifecycle_stage: deleted
+run_id: 1c58233859364be982d218791be49c78
+run_name: melodic-seal-59
+run_uuid: 1c58233859364be982d218791be49c78
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717450723542
+status: 4
+tags: []
+user_id: mona

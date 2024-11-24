@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/1172edbe836244d2a14390b379b583a9/artifacts
+deleted_time: 1717477720129
+end_time: 1717476159450
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: 1172edbe836244d2a14390b379b583a9
+run_name: aged-elk-34
+run_uuid: 1172edbe836244d2a14390b379b583a9
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717476140987
+status: 3
+tags: []
+user_id: mona

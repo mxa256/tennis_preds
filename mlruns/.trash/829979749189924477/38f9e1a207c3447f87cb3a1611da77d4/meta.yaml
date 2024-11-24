@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/829979749189924477/38f9e1a207c3447f87cb3a1611da77d4/artifacts
+deleted_time: 1717474020518
+end_time: null
+entry_point_name: ''
+experiment_id: '829979749189924477'
+lifecycle_stage: deleted
+run_id: 38f9e1a207c3447f87cb3a1611da77d4
+run_name: sincere-bear-173
+run_uuid: 38f9e1a207c3447f87cb3a1611da77d4
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717473955005
+status: 1
+tags: []
+user_id: mona

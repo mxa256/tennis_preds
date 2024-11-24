@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/221053520915313750/46884c405f8141b3aae1b1c5d3a2aa30/artifacts
+deleted_time: 1717477720129
+end_time: 1717476354026
+entry_point_name: ''
+experiment_id: '221053520915313750'
+lifecycle_stage: deleted
+run_id: 46884c405f8141b3aae1b1c5d3a2aa30
+run_name: righteous-cub-375
+run_uuid: 46884c405f8141b3aae1b1c5d3a2aa30
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717476342535
+status: 3
+tags: []
+user_id: mona

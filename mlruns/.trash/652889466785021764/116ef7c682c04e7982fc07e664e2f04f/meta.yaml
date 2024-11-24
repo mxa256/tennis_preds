@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/652889466785021764/116ef7c682c04e7982fc07e664e2f04f/artifacts
+deleted_time: 1717451185146
+end_time: 1717449806246
+entry_point_name: ''
+experiment_id: '652889466785021764'
+lifecycle_stage: deleted
+run_id: 116ef7c682c04e7982fc07e664e2f04f
+run_name: powerful-mole-1
+run_uuid: 116ef7c682c04e7982fc07e664e2f04f
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717449796406
+status: 4
+tags: []
+user_id: mona

@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/545417160078729357/2db8a3c5d0964b2eb882a87275bee6ea/artifacts
+end_time: 1717474205215
+entry_point_name: ''
+experiment_id: '545417160078729357'
+lifecycle_stage: active
+run_id: 2db8a3c5d0964b2eb882a87275bee6ea
+run_name: victorious-bug-67
+run_uuid: 2db8a3c5d0964b2eb882a87275bee6ea
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717474190072
+status: 3
+tags: []
+user_id: mona

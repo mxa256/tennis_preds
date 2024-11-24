@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/652889466785021764/c365d5e810304893904f1b0ef4220f63/artifacts
+deleted_time: 1717451185146
+end_time: 1717449897571
+entry_point_name: ''
+experiment_id: '652889466785021764'
+lifecycle_stage: deleted
+run_id: c365d5e810304893904f1b0ef4220f63
+run_name: salty-doe-309
+run_uuid: c365d5e810304893904f1b0ef4220f63
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717449885332
+status: 4
+tags: []
+user_id: mona

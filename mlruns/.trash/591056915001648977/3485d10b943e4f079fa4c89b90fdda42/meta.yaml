@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/3485d10b943e4f079fa4c89b90fdda42/artifacts
+deleted_time: 1717473348582
+end_time: 1717453405587
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: 3485d10b943e4f079fa4c89b90fdda42
+run_name: sassy-asp-297
+run_uuid: 3485d10b943e4f079fa4c89b90fdda42
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717453383947
+status: 3
+tags: []
+user_id: mona

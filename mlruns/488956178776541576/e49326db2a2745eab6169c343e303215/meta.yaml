@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/e49326db2a2745eab6169c343e303215/artifacts
+end_time: 1717511279023
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: e49326db2a2745eab6169c343e303215
+run_name: delicate-squid-846
+run_uuid: e49326db2a2745eab6169c343e303215
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511272105
+status: 3
+tags: []
+user_id: mona

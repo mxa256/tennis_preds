@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/c10ac55aedca420c86227d029f58af5c/artifacts
+end_time: 1717511432868
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: c10ac55aedca420c86227d029f58af5c
+run_name: entertaining-kit-990
+run_uuid: c10ac55aedca420c86227d029f58af5c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511422247
+status: 3
+tags: []
+user_id: mona

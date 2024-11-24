@@ -1,0 +1,6 @@
+artifact_location: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576
+creation_time: 1717511039130
+experiment_id: '488956178776541576'
+last_update_time: 1717511039130
+lifecycle_stage: active
+name: 'Tennis_Preds: XGBoost Full'

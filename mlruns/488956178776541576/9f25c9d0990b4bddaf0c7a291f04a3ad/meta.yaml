@@ -1,0 +1,15 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/9f25c9d0990b4bddaf0c7a291f04a3ad/artifacts
+end_time: 1717511568653
+entry_point_name: ''
+experiment_id: '488956178776541576'
+lifecycle_stage: active
+run_id: 9f25c9d0990b4bddaf0c7a291f04a3ad
+run_name: lyrical-yak-534
+run_uuid: 9f25c9d0990b4bddaf0c7a291f04a3ad
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717511561298
+status: 3
+tags: []
+user_id: mona

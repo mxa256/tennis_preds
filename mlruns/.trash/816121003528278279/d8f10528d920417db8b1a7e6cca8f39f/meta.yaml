@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/816121003528278279/d8f10528d920417db8b1a7e6cca8f39f/artifacts
+deleted_time: 1717473350674
+end_time: 1717370461835
+entry_point_name: ''
+experiment_id: '816121003528278279'
+lifecycle_stage: deleted
+run_id: d8f10528d920417db8b1a7e6cca8f39f
+run_name: sincere-wren-150
+run_uuid: d8f10528d920417db8b1a7e6cca8f39f
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717370446174
+status: 3
+tags: []
+user_id: mona

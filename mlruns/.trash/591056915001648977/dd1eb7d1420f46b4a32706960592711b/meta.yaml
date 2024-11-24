@@ -1,0 +1,16 @@
+artifact_uri: /Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/591056915001648977/dd1eb7d1420f46b4a32706960592711b/artifacts
+deleted_time: 1717473348582
+end_time: 1717452994927
+entry_point_name: ''
+experiment_id: '591056915001648977'
+lifecycle_stage: deleted
+run_id: dd1eb7d1420f46b4a32706960592711b
+run_name: masked-donkey-861
+run_uuid: dd1eb7d1420f46b4a32706960592711b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1717452977338
+status: 3
+tags: []
+user_id: mona
