@@ -2,6 +2,9 @@
 .Rhistory
 .Rapp.history
 
+# Ignore all files in the "mlruns" foldre
+mlruns/
+
 # Session Data files
 .RData
 .RDataTmp
@@ -47,6 +50,3 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
-
-# Ignore all files in the "mlruns" foldre
-mlruns/
