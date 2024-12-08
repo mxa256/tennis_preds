@@ -125,7 +125,7 @@ colnames(y_test) <- "label"
 #Model Testing
 ```{r}
 #Model 1: RF + SVM Radial Kernel
-model_path <- "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/545417160078729357/48b2820e7fb6429d92240000e45ad961/artifacts/model.rds"
+model_path <- "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/577327215109989018/fad1ef543f6c424ea97444b3c70f9296/artifacts/model.rds"
 
 loaded_model <- readRDS(file = model_path)
 
@@ -163,12 +163,12 @@ cf_data <- data.frame(Actual, Predicted, values)
            
 cf_matrix <- ggplot(cf_data=preds_actual, mapping = aes(x = Actual, y = Predicted)) +
   geom_tile(aes(fill = values), colour = "white") +
-  geom_text(aes(label = group_counts), vjust = 2.0) +
-  geom_text(aes(label = group_percentages), vjust = 4.0) +
-  geom_text(aes(label = group_names), vjust = 0) +
+  geom_text(aes(label = group_counts), vjust = 2.0, size=6) +
+  geom_text(aes(label = group_percentages), vjust = 4.0, size=6) +
+  geom_text(aes(label = group_names), vjust = 0, size=6) +
   scale_fill_gradient(low = "blue", high = "red") +
   theme_bw() + theme(legend.position = "none") + 
-  ggtitle("Confusion Matrix")
+  ggtitle("Confusion Matrix: Unseen Test Set RF + SVM Radial Kernel")
 
 cf_matrix
 
@@ -248,10 +248,10 @@ for (metric in metrics) {
 ```{r}
 
 #Model 2: XGBoost Top Performer
-model_path <- "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/69fbce8b1ec1446e84e89fe64101fbf0/artifacts/model.rds"
+#model_path <- "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/553438081521013443/08e51b57a4d14191ac42e4ca4db0b54f/artifacts/model.rds"
 
 #Model 3: XGBoost Optimal Performer 
-model_path <- "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/488956178776541576/cf90b13f1e63481f975b738e9b37a256/artifacts/model.rds"
+model_path <- "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/553438081521013443/602c02abd9d84d8aa1cb4b9a5612d087/artifacts/model.rds"
 
 loaded_model <- readRDS(file = model_path)
 
@@ -292,12 +292,12 @@ cf_data <- data.frame(Actual, Predicted, values)
            
 cf_matrix <- ggplot(cf_data=preds_actual, mapping = aes(x = Actual, y = Predicted)) +
   geom_tile(aes(fill = values), colour = "white") +
-  geom_text(aes(label = group_counts), vjust = 2.0) +
-  geom_text(aes(label = group_percentages), vjust = 4.0) +
-  geom_text(aes(label = group_names), vjust = 0) +
+  geom_text(aes(label = group_counts), vjust = 2.0, size=6) +
+  geom_text(aes(label = group_percentages), vjust = 4.0, size=6) +
+  geom_text(aes(label = group_names), vjust = 0, size=6) +
   scale_fill_gradient(low = "blue", high = "red") +
   theme_bw() + theme(legend.position = "none") + 
-  ggtitle("Confusion Matrix")
+  ggtitle("Confusion Matrix: Unseen Test Set")
 
 cf_matrix
 

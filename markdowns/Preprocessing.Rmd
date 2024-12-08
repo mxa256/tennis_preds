@@ -1,5 +1,5 @@
 ---
-title: "Preprocessing"
+title: "Test Data Preprocessing"
 output: html_document
 date: "2024-06-05"
 ---
@@ -712,6 +712,7 @@ data <- data %>%
 identifiers <- c(
   "row_id",
   "tourney_id",
+  "tourney_date_P_1", #same for both players 
   "match_num",
   "id_P_1",
   "id_P_2",
@@ -721,7 +722,7 @@ identifiers <- c(
   "Win_P_1"
 )
 
-top20_featimp <- c("row_id",
+top_featimp <- c("row_id",
                    "rank_diff_P_1", #We'll just pick the P1 rank diff, it's the same  
                    "ht_P_1", 
                    "ht_P_2", 
@@ -747,9 +748,10 @@ top20_featimp <- c("row_id",
                    #"X1stWon_av_P_2", 
                    #"X2ndWon_av_P_1", 
                    #"X2ndWon_av_P_2", 
-                   "SvGms_av_P_1")
+                   "SvGms_av_P_1",
+                   "SvGms_av_P_2")
 
-data <- data %>% select(c(top20_featimp, identifiers))
+data <- data %>% select(c(top_featimp, identifiers))
 
 ```
 
@@ -757,17 +759,17 @@ data <- data %>% select(c(top20_featimp, identifiers))
 ```{r}
 #Convert back to dataframe
 data <- data %>%
-  unnest(cols = c(top20_featimp, identifiers))
+  unnest(cols = c(top_featimp, identifiers))
 
 #Preserve complete cases
 data <- data[complete.cases(data),]
 
 data_ids <- data %>% select(identifiers)
-data_train <- data %>% select(top20_featimp)
+data_train <- data %>% select(top_featimp)
 
 #Let's export these files for our modeling RMD
-write.csv(data_ids, "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/test2023_data_ids.csv", row.names=FALSE)
-write.csv(data_train, "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/test2023_data_train.csv", row.names=FALSE)
+write.csv(data_ids, "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/data/test2023_data_ids.csv", row.names=FALSE)
+write.csv(data_train, "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/data/test2023_data_train.csv", row.names=FALSE)
 
 ```
 

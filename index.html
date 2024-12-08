@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tennis Match Predictor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    #predictForm {
+      max-width: 400px;
+      margin: 50px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #28a745;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #218838;
+    }
+
+    #result {
+      max-width: 400px;
+      margin: 20px auto;
+      font-size: 18px;
+      text-align: center;
+      padding: 10px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>Tennis Match Predictor</h1>
+
+  <form id="predictForm">
+    <label for="player1">Player 1:</label>
+    <input type="text" id="player1" name="player1" list="player1-list" placeholder="Start typing..." required>
+
+    <label for="player2">Player 2:</label>
+    <input type="text" id="player2" name="player2" list="player2-list" placeholder="Start typing..." required>
+
+    <button type="submit">Predict Winner</button>
+  </form>
+
+  <div id="result"></div>
+
+  <!-- Datalists for autofill -->
+  <datalist id="player1-list">
+    <option value="Novak Djokovic">
+    <option value="Rafael Nadal">
+    <option value="Roger Federer">
+    <option value="Andy Murray">
+    <!-- Add more players as needed -->
+  </datalist>
+
+  <datalist id="player2-list">
+    <option value="Novak Djokovic">
+    <option value="Rafael Nadal">
+    <option value="Roger Federer">
+    <option value="Andy Murray">
+    <!-- Add more players as needed -->
+  </datalist>
+    
+  <script>
+document.getElementById('predictForm').onsubmit = async function(e) {
+  e.preventDefault();
+  const player1 = document.getElementById('player1').value;
+  const player2 = document.getElementById('player2').value;
+
+  const response = await fetch('http://localhost:8000/predict', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ player1: player1, player2: player2 })
+  });
+
+  const data = await response.json();
+
+  if (data.error) {
+    // Display the error message if any
+    document.getElementById('result').innerText = `Error: ${data.error}`;
+  } else {
+    // Extract the probability that player1 wins
+    const player1Probability = data.winner_prediction;
+
+    // Determine the winner
+    let winner, winnerProbability;
+    if (player1Probability > 0.5) {
+      winner = player1;
+      winnerProbability = player1Probability;
+    } else {
+      winner = player2;
+      winnerProbability = 1 - player1Probability;
+    }
+    const percent = (winnerProbability * 100).toFixed(2);
+
+    // Display predicted winner and probability
+    // Use toFixed(2) to show probability with two decimal places
+    document.getElementById('result').innerText = 
+      `Predicted Winner: ${winner}\nProbability: ${percent}%`;
+  }
+};
+</script>
+
+</body>
+</html>
