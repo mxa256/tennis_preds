@@ -46,7 +46,7 @@ Sys.setenv(MLFLOW_VERBOSE=TRUE)
 mlflow_set_tracking_uri('http://127.0.0.1:5000')
 
 mlflow_server(
-  file_store ="/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns", 
+  file_store = "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns",
   #default_artifact_root = 'http://127.0.0.1:5000',
   host = "127.0.0.1",
   port = 5000,
@@ -151,7 +151,7 @@ data_y_train <- as.data.frame(data_ids$Win_P_1)
 colnames(data_y_train) <- "label"
 
 #Features to keep from random forest
-top20_featimp <- c("rank_diff", 
+top_featimp <- c("rank_diff", 
                    "ht_P_1", 
                    "ht_P_2", 
                    "age_P_1", 
@@ -170,9 +170,10 @@ top20_featimp <- c("rank_diff",
                    "X1stWon_av_P_2", 
                    "X2ndWon_av_P_1", 
                    "X2ndWon_av_P_2", 
-                   "SvGms_av_P_1")
+                   "SvGms_av_P_1",
+                   "SvGms_av_P_2")
 
-data_x_train_scaled <- data_x_train_scaled %>% select(top20_featimp)
+data_x_train_scaled <- data_x_train_scaled %>% select(top_featimp)
 
 #Bring the data back and shuffle it
 set.seed(42)
@@ -440,7 +441,8 @@ for(C in c_range){
            #Log the artifacts into mlflow
            saveRDS(model, "model.rds")
            mlflow_log_artifact("model.rds")
-           mlflow_log_artifact("MLF_HP_Tuning.Rmd")
+           #mlflow_log_artifact("MLF_HP_Tuning.Rmd")
+           mlflow_log_artifact("markdowns/MLF_HP_Tuning.Rmd")
            
            print("Run complete!")
          }
@@ -681,7 +683,8 @@ for(e in eta_range){
              #Log the artifacts into mlflow
              saveRDS(model, "model.rds")
              mlflow_log_artifact("model.rds")
-             mlflow_log_artifact("MLF_HP_Tuning.Rmd")
+             #mlflow_log_artifact("MLF_HP_Tuning.Rmd")
+             mlflow_log_artifact("markdowns/MLF_HP_Tuning.Rmd")
              
              print("Run complete!")
            }

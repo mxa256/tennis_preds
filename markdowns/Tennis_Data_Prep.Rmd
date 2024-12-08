@@ -1,5 +1,5 @@
 ---
-title: "Tennis Modeling: ATP Tour"
+title: "Tennis Modeling of the ATP Tour: Training Data Preprocessing"
 author: "Mona Ascha"
 date: "`Last Edited format(Sys.time(), '%d %B %Y'`"
 output: html_document
@@ -1431,7 +1431,10 @@ data_clean <- dummy_cols(data_clean, select_columns=to_dummify)
 #We will drop these identifiers for modeling but merge them back to dataset 
 identifiers <- c(
   "tourney_id",
+  "rank_P_1",
+  "rank_P_2",
   "match_num",
+  "tourney_date_P_1", #same for both P1 and P2
   "id_P_1",
   "id_P_2",
   "name_P_1",
@@ -1442,16 +1445,16 @@ identifiers <- c(
 
 #Drop additional variables
 to_drop <- c(
-  "tourney_date_P_1", #Variables that won't help the model
-  "tourney_level_P_1",
+#  "tourney_date_P_1", #Variables that won't help the model
+  "tourney_level_P_1", #Variables that won't help the model
   "draw_size",
   "score_P_1",
   "round_P_1",
   "year_P_1",
   "ret_P_1",
   "ret_P_2",
-  "rank_P_1",
-  "rank_P_2",
+  #"rank_P_1",
+  #"rank_P_2",
   "rank_points_P_1",
   "rank_points_P_2",
   "seed_P_1",
@@ -1494,8 +1497,8 @@ data_ids <- data_clean[identifiers]
 data_train <- data_clean %>% select(!identifiers)
 
 #Let's export these files for our modeling RMD
-write.csv(data_ids, "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/data_ids.csv", row.names=FALSE)
-write.csv(data_train, "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/data_train.csv", row.names=FALSE)
+write.csv(data_ids, "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/data/data_ids.csv", row.names=FALSE)
+write.csv(data_train, "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/data/data_train.csv", row.names=FALSE)
 
 ```
 
