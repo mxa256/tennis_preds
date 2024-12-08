@@ -45,7 +45,7 @@ The model's performance was evaluated using metrics such as **F1-score**, **AUC*
 - **Data Drift**: The model may face performance degradation over time due to the emergence of new players and the aging of older players, necessitating model retraining.
 
 ## Deployment
-Deployment is still pending.
+The XGBoost model was deployed using the "plumber" package to create an API endpoint. The index.html file has the front end interface where two player names are entered and a winner is predicted.
 
 ## Authors
 - **Mona Ascha** (Author)
