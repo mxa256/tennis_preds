@@ -20,7 +20,9 @@ tennis_preds/
 ├── R/                      # Pure-function library; sourced by analyses and api.R
 │   ├── data/               #   Static lookup tables (e.g. player_heights.csv)
 │   ├── refresh_data.R      #   Idempotent git pull/clone of upstream ATP data
+│   ├── load_matches.R      #   load_atp_matches / clean_matches — read + clean raw CSVs
 │   ├── impute_heights.R    #   impute_heights(matches) — fills winner_ht/loser_ht
+│   ├── parse_score.R       #   add_set_features(matches) — set_1..5 + tiebreak features
 │   ├── elo.R               #   compute_player_elos / elo_odds_* / add_elo_features
 │   └── predict.R           #   Inference: get_recent_averages/prepare_features/predict_winner
 ├── analysis/               # (future) Quarto orchestration docs
