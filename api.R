@@ -85,7 +85,7 @@ cols_to_scale <- c("ht_P_1",
 input_data[cols_to_scale] <- scale(input_data[cols_to_scale])
 
 
-source("prepare_features.R") # Ensure prepare_features & predict_winner are defined
+source("R/predict.R") # Ensure prepare_features & predict_winner are defined
 
 # Define endpoint for prediction
 #* @param player1 Character: Name of Player 1
