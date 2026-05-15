@@ -20,14 +20,15 @@ tennis_preds/
 ├── R/                      # Pure-function library; sourced by analyses and api.R
 │   ├── data/               #   Static lookup tables (e.g. player_heights.csv)
 │   ├── refresh_data.R      #   Idempotent git pull/clone of upstream ATP data
-│   └── impute_heights.R    #   impute_heights(matches) — fills winner_ht/loser_ht
+│   ├── impute_heights.R    #   impute_heights(matches) — fills winner_ht/loser_ht
+│   ├── elo.R               #   compute_player_elos / elo_odds_* / add_elo_features
+│   └── predict.R           #   Inference: get_recent_averages/prepare_features/predict_winner
 ├── analysis/               # (future) Quarto orchestration docs
 ├── markdowns/              # Legacy Rmd notebooks (being decomposed into R/)
 ├── data/                   # Generated training/test CSVs (regenerable from pipeline)
 ├── models/                 # (future) Final saved .rds artifacts
 ├── mlruns/                 # MLflow experiment tracking (gitignored)
 ├── api.R                   # Plumber API serving the XGBoost model
-├── prepare_features.R      # Legacy — being merged into R/predict.R
 ├── index.html              # Static frontend (calls localhost:8000/predict)
 └── tennis_preds.Rproj
 ```
@@ -67,10 +68,10 @@ plumber::pr_run(plumber::pr("api.R"))
 
 ## Known issues
 
-- **`prepare_features.R:26` (duplicated at `markdowns/deployment_test.Rmd:57`):**
-  `SvGms_av = ifelse(name_P_1 == player, SvGms_av_P_1, X2ndWon_av_P_2)` — when
-  the player is in the P2 slot, the SvGms feature gets the 2nd-serve-won
-  value instead. Will be fixed during the `R/predict.R` extraction.
+- **SvGms P2-slot bug — fixed in `R/predict.R`** (commit dc6616e). The
+  identical bug still lurks at `markdowns/deployment_test.Rmd:57`; that file
+  is a manual test harness slated for deletion and will be replaced by a
+  testthat regression test in Phase 6.
 - **Stale training data.** Current model was trained on 2018–2022. Refresh
   in progress to retrain on 2020–2026 YTD with a time-based test split.
 - **No `renv` lockfile yet.** Packages must be installed manually. Lockfile
