@@ -17,18 +17,27 @@
 #   rr <- add_rolling_averages(m)
 #   rr$wide   # -> column pruning (2k); rr$long -> data_long
 #
-# Behaviour is preserved verbatim from Tennis_Data_Prep.Rmd:1176-1292.
-# Two pure diagnostics with no effect on the outputs are intentionally
-# dropped (same policy as the dropped View()/dead code earlier): the
-# unused `duplicates` group-by summary (Rmd:1214) and the names(data7)
-# print (Rmd:1220).
+# Carved from Tennis_Data_Prep.Rmd:1176-1292. Pure diagnostics with no
+# effect on the outputs are dropped (same policy as the dropped
+# View()/dead code earlier): the names(data7) print (Rmd:1220) and the
+# `duplicates` group-by summary (Rmd:1214) -- the latter is now moot,
+# the fix below makes duplicate (tourney_id, match_num, player) rows
+# impossible by construction.
 #
-# KNOWN-FRAGILE, preserved deliberately (flagged for the retrain phase,
-# NOT fixed here): the nrow/2 top/bottom split + `player` reassignment
-# (Rmd:1198-1204). The long frame interleaves p1-row/p2-row, so "first
-# half" is not "all P_1 rows" and the ifelse(p1_won==1,...) labeling is
-# logically suspect. Reproduced exactly. Also: gameswon_perc inherits
-# the dataset-wide-scalar bug from match_stats.R and is rolled as-is.
+# INTENTIONAL FIX (deviates from Rmd:1198-1204): the original built
+# the interleaved long frame, split it at nrow/2 with an off-by-one,
+# and re-derived `player` from p1_won with OPPOSITE rules per half.
+# That made P_1/P_2 mean "winner" in one half and "loser" in the
+# other (incoherent features), and the off-by-one could straddle a
+# match's two rows across halves, yielding duplicate player labels ->
+# pivot_wider list-columns (corrupt cells). We instead label each row
+# at construction time, where the slot is known unambiguously (1st
+# emitted row = P_1, 2nd = P_2), and delete the whole split block.
+# This changes model inputs; the step-4 retrain consumes the
+# corrected frame. Landed as a standalone fix commit, separate from
+# the faithful 2j carve (cf. the SvGms / gameswon_perc fixes).
+# gameswon_perc is rolled here too but is now correct (fixed upstream
+# in match_stats.R).
 add_rolling_averages <- function(data6) {
   data6 <- data6 %>% dplyr::rename(
     p1_latest_elo = latest_elo_p1,
@@ -42,26 +51,16 @@ add_rolling_averages <- function(data6) {
   new_cols <- c("Win", info, substr(p1, 4, nchar(p1)), "player")
 
   l <- list()
-  # Two rows per match: the p1-slot player (label = p1_won) and the
-  # p2-slot player (label = 1 - p1_won).
+  # Two rows per match, slot known here: the p1-slot player (label =
+  # p1_won) is P_1, the p2-slot player (label = 1 - p1_won) is P_2.
+  # Labelling at construction is the fix -- see file header.
   for (i in 1:nrow(data6)) {
-    l <- c(l, list(c(data6[i, "p1_won"], data6[i, c(info, p1)])))
-    l <- c(l, list(c(abs(1 - data6[i, "p1_won"]), data6[i, c(info, p2)])))
+    l <- c(l, list(c(data6[i, "p1_won"], data6[i, c(info, p1)], player = "P_1")))
+    l <- c(l, list(c(abs(1 - data6[i, "p1_won"]), data6[i, c(info, p2)], player = "P_2")))
   }
 
   data7 <- as.data.frame(do.call(rbind, l))
-  rows_split <- nrow(data7) / 2
-
-  data7_tophalf <- data7[1:(rows_split - 1), ]
-  data7_bottomhalf <- data7[rows_split:nrow(data7), ]
-
-  data7_tophalf$player <- ifelse(data7_tophalf$p1_won == 1, "P_1", "P_2")
-  data7_bottomhalf$player <- ifelse(data7_bottomhalf$p1_won == 1, "P_2", "P_1")
-
-  data7_tophalf <- as.data.frame(lapply(data7_tophalf, unlist, use.names = TRUE))
-  data7_bottomhalf <- as.data.frame(lapply(data7_bottomhalf, unlist, use.names = TRUE))
-
-  data7 <- rbind(data7_tophalf, data7_bottomhalf)
+  data7 <- as.data.frame(lapply(data7, unlist, use.names = TRUE))
 
   colnames(data7) <- new_cols
 
