@@ -17,13 +17,14 @@
 #     -- never called, the score-into-games split uses inline
 #     separate() -- so it is intentionally not carried over. No
 #     behaviour change.
-#   * KNOWN BUG, preserved deliberately: w_gameswon_perc /
-#     l_gameswon_perc (Rmd:901-903) wrap the games columns in sum(),
-#     collapsing every match to a single dataset-wide scalar instead
-#     of a per-match games-won share. That scalar then feeds
-#     w/l_gmstosets_op_ratio and w/l_ptstogame_op_ratio. Reproduced
-#     exactly here; fixing it is a separate follow-up (it changes
-#     model features, so it needs a retrain, not a refactor commit).
+#   * INTENTIONAL FIX (deviates from Rmd:901-903): the original
+#     wrapped the games columns in sum(), collapsing every match to a
+#     single dataset-wide scalar instead of a per-match games-won
+#     share -- a genuine bug, since the value feeds the per-match
+#     w/l_gmstosets_op_ratio and w/l_ptstogame_op_ratio. Computed
+#     row-wise here. This changes model inputs; the retrain (step 4)
+#     consumes the corrected features. Landed as its own fix commit,
+#     separate from the faithful carve (cf. the SvGms fix).
 add_match_stats <- function(matches) {
   # First/second serve made %.
   matches$w_1st_made <- matches$w_1stIn / matches$w_svpt
@@ -102,10 +103,15 @@ add_match_stats <- function(matches) {
       as.numeric
     )
 
-  # Games won % -- see KNOWN BUG note in the file header: sum() makes
-  # these dataset-wide scalars, not per-match. Preserved verbatim.
-  matches$w_gameswon_perc <- sum(matches$w_1 + matches$w_2 + matches$w_3 + matches$w_4 + matches$w_5, na.rm = T) / sum(matches$w_1 + matches$w_2 + matches$w_3 + matches$w_4 + matches$w_5 + matches$l_1 + matches$l_2 + matches$l_3 + matches$l_4 + matches$l_5, na.rm = T)
-  matches$l_gameswon_perc <- sum(matches$l_1 + matches$l_2 + matches$l_3 + matches$l_4 + matches$l_5, na.rm = T) / sum(matches$w_1 + matches$w_2 + matches$w_3 + matches$w_4 + matches$w_5 + matches$l_1 + matches$l_2 + matches$l_3 + matches$l_4 + matches$l_5, na.rm = T)
+  # Games won % -- per match (FIX: original used sum() over the whole
+  # column, see file header). Unplayed sets are NA; rowSums(na.rm)
+  # treats them as no contribution, which is the intended per-match
+  # share.
+  w_games <- rowSums(cbind(matches$w_1, matches$w_2, matches$w_3, matches$w_4, matches$w_5), na.rm = T)
+  l_games <- rowSums(cbind(matches$l_1, matches$l_2, matches$l_3, matches$l_4, matches$l_5), na.rm = T)
+  total_games <- w_games + l_games
+  matches$w_gameswon_perc <- w_games / total_games
+  matches$l_gameswon_perc <- l_games / total_games
 
   # Games-to-sets and points-to-games over-performance ratios.
   matches$w_gmstosets_op_ratio <- matches$w_setwon_perc / matches$w_gameswon_perc
