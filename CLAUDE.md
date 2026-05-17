@@ -67,6 +67,13 @@ plumber::pr_run(plumber::pr("api.R"))
   monolith into `R/`, preserve behaviour exactly. Style improvements
   (collapsing the `data1 → data2 → ...` chain, replacing per-set unrolled
   blocks with `purrr::map`, etc.) go in separate follow-up commits.
+  Genuine bugs found during a carve **do** get fixed — but as their own
+  clearly-labelled `fix(...)` commit, separate from the faithful
+  extraction (e.g. the SvGms, `gameswon_perc`, and rolling-averages
+  split fixes).
+- **Commit messages: no AI co-author trailer.** Do not append
+  `Co-Authored-By: Claude` (or any AI/assistant co-author line) to
+  commits in this repo. End the message at its last content line.
 
 ## Known issues
 
