@@ -23,7 +23,14 @@ tennis_preds/
 │   ├── load_matches.R      #   load_atp_matches / clean_matches — read + clean raw CSVs
 │   ├── impute_heights.R    #   impute_heights(matches) — fills winner_ht/loser_ht
 │   ├── parse_score.R       #   add_set_features(matches) — set_1..5 + tiebreak features
+│   ├── set_winners.R       #   add_set_winners(matches) — per-set flags + sets won
+│   ├── match_stats.R       #   add_match_stats(matches) — serve/return/dominance/BP
+│   ├── assign_player_slots.R # assign_player_slots(matches, seed) — p1/p2 + label
 │   ├── elo.R               #   compute_player_elos / elo_odds_* / add_elo_features
+│   ├── rolling_averages.R  #   add_rolling_averages() — 30-match form, lag=1
+│   ├── prune_columns.R     #   prune_columns(rolled) → list(clean, long)
+│   ├── dummify.R           #   dummify_clean(clean) — one-hot + drop non-model cols
+│   ├── split_train_ids.R   #   split_train_ids(clean) → list(train, ids)
 │   └── predict.R           #   Inference: get_recent_averages/prepare_features/predict_winner
 ├── analysis/               # (future) Quarto orchestration docs
 ├── markdowns/              # Legacy Rmd notebooks (being decomposed into R/)
@@ -95,8 +102,12 @@ The repo is being modernised on the `refresh-2026` branch in May 2026.
 See `git log refresh-2026` for the play-by-play. High-level arc:
 
 1. ✅ Hygiene + live data refresh
-2. 🟡 Carve `Tennis_Data_Prep.Rmd` into focused pure functions in `R/`
-3. `renv::init()` + replace absolute paths with `here::here()`
+2. ✅ Carve `Tennis_Data_Prep.Rmd` into focused pure functions in `R/`
+   (full pipeline now: load_matches → parse_score → set_winners →
+   match_stats → assign_player_slots → elo → rolling_averages →
+   prune_columns → dummify → split_train_ids; two latent bugs fixed
+   along the way — `gameswon_perc`, rolling-averages split)
+3. 🟡 `renv::init()` + replace absolute paths with `here::here()`
 4. Retrain on fresh data via `tidymodels` (XGBoost engine) with a
    time-based holdout
 5. Migrate `.Rmd` → Quarto, separate EDA from pipeline
