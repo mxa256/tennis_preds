@@ -87,7 +87,19 @@ add_rolling_averages <- function(data6) {
 
   # 30-match trailing mean per player; lag = 1 keeps the current match
   # out of its own features.
+  #
+  # LEAKAGE FIX: mean_run() rolls over rows IN THEIR CURRENT ORDER.
+  # assign_player_slots() shuffles the data and nothing re-sorts it,
+  # so without the arrange() below the "trailing" window is a random
+  # 30 of the player's matches -- including FUTURE ones -- leaking the
+  # outcome into ~50 _av features (this, not Elo, was the dominant
+  # leak behind the implausible baseline accuracy). Sorting each
+  # player's rows chronologically before the roll makes the window
+  # genuinely past-only. tourney_date is YYYYMMDD so numeric sort is
+  # chronological; match_num orders within a tournament/day. Standalone
+  # fix() commit, deviating from the original (which had this leak).
   data7 <- data7 %>%
+    dplyr::arrange(name, tourney_date, match_num) %>%
     dplyr::group_by(name) %>%
     dplyr::mutate(dplyr::across(
       .cols = nums_to_avg,
