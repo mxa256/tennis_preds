@@ -84,10 +84,11 @@ plumber::pr_run(plumber::pr("api.R"))
 
 ## Known issues
 
-- **SvGms P2-slot bug — fixed in `R/predict.R`** (commit dc6616e). The
-  identical bug still lurks at `markdowns/deployment_test.Rmd:57`; that file
-  is a manual test harness slated for deletion and will be replaced by a
-  testthat regression test in Phase 6.
+- **SvGms P2-slot bug — fixed in `R/predict.R`** (commit dc6616e) and
+  now guarded by `tests/testthat/test-predict-svgms.R` (the Phase-6
+  regression test this note used to promise). The identical bug still
+  lurks at `markdowns/deployment_test.Rmd:57`; that file is a manual
+  test harness slated for deletion in step 5.
 - **Two target leaks found & fixed in step 4** (the original project's
   headline accuracy was inflated and never caught): end-of-history Elo
   (commit ea6acde) and shuffle-order rolling averages (commit 90b6289,
@@ -129,8 +130,12 @@ See `git log refresh-2026` for the play-by-play. High-level arc:
 3. ✅ Lean `renv` + portable paths (`api.R` via `here::here()`;
    `DESCRIPTION` dependency contract; legacy `.Rmd` paths deferred to
    step 5)
-4. 🟡 Retrain on fresh data via `tidymodels` (XGBoost engine) with a
-   time-based holdout
-5. Migrate `.Rmd` → Quarto, separate EDA from pipeline
-6. Add `README.md` + minimal `testthat` coverage
-7. Clean up Plumber API + Dockerize + deploy
+4. ✅ Retrain on fresh data, `tidymodels`/XGBoost, time-based holdout
+   (2 target leaks found & fixed; honest baseline ≈0.856; tuning =
+   no gain. New model NOT yet promoted to the app — that's step 7.)
+5. 🟡 Migrate `.Rmd` → Quarto, separate EDA from pipeline (also
+   deletes the legacy notebooks + their absolute paths)
+6. ✅ `README.md` rewritten (honest numbers) + `testthat` regression
+   suite (`tests/testthat/`, 28 tests guarding the leak/bug fixes)
+7. Clean up Plumber API + Dockerize + deploy (incl. wiring the API
+   to the new leak-free model)
