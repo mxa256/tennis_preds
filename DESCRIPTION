@@ -4,12 +4,17 @@ Version: 0.0.0.9000
 Authors@R: person("Mona", "Ascha", role = c("aut", "cre"))
 Description: Internal project (not a distributed package): the
     Tennis_Data_Prep pipeline carved into R/ pure functions plus a
-    Plumber prediction API. This DESCRIPTION declares the lean runtime
-    dependency contract -- only what R/ and api.R actually use -- and
-    is the basis for the explicit renv lockfile. The legacy markdowns/
-    notebooks pull in a much larger ML stack (keras, tidymodels,
-    caret, ...); those are intentionally NOT locked here because they
-    are being retired/migrated in refactor step 5.
+    Plumber prediction API. This DESCRIPTION is the renv dependency
+    manifest. Imports = the lean runtime set used by R/ and api.R
+    (dplyr..xgboost) PLUS the training-time modelling stack
+    (parsnip/workflows/yardstick/rsample) used by analysis/ scripts;
+    they share Imports because renv's explicit snapshot treats
+    Suggests as dev-only and would not lock them. The API itself never
+    needs the modelling packages -- it serves a saved model. The
+    legacy markdowns/ ML stack (keras, tidymodels meta, caret, ...) is
+    intentionally NOT locked: those notebooks are retired/migrated in
+    refactor step 5. Re-snapshot after modelling deps grow (e.g. tune/
+    dials when hyperparameter tuning lands).
 Encoding: UTF-8
 Imports:
     dplyr,
@@ -21,4 +26,8 @@ Imports:
     fastDummies,
     here,
     plumber,
-    xgboost
+    xgboost,
+    parsnip,
+    workflows,
+    yardstick,
+    rsample
