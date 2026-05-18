@@ -41,12 +41,21 @@ Dependencies are pinned with [`renv`](https://rstudio.github.io/renv/)
 
 ```r
 source("R/refresh_data.R")                 # sync upstream ATP data
-Rscript analysis/build_training_data.R     # run pipeline -> data/*.csv
-Rscript analysis/train_model.R             # time-split baseline + holdout metrics
-Rscript analysis/tune_model.R              # (optional) hyperparameter search
+Rscript analysis/build_training_data.R     # pipeline -> data/*.csv + serving snapshot
+Rscript analysis/train_model.R             # time-split baseline + honest holdout metrics
+Rscript analysis/tune_model.R              # (optional) time-aware hyperparameter search
+Rscript analysis/train_production_model.R  # final model on ALL data -> models/model.rds
 Rscript tests/testthat.R                   # regression suite
 plumber::pr_run(plumber::pr("api.R"))      # serve predictions on :8000
 ```
+
+Model `.rds` artifacts are gitignored (regenerable from the committed
+data + seeded scripts); on a fresh clone run
+`analysis/train_production_model.R` once before serving. No Docker —
+solo/local use; `plumber::pr_run` above is the deploy path.
+
+The `/predict` endpoint takes `player1`, `player2`, `surface`
+(Hard/Clay/Grass), `best_of` (3/5) and returns `p1_win_probability`.
 
 ## Model performance
 
@@ -69,6 +78,29 @@ improvement** — the ceiling is set by features/data, not the knobs.
 > shuffle-order rolling averages — now fixed (`R/elo.R`,
 > `R/rolling_averages.R`) and guarded by regression tests. Do not cite
 > the pre-fix figures.
+
+## Known limitations
+
+- **The interactive API is experimental.** Those metrics are for the
+  *historical-match-row* task (predict a real match given both
+  players' as-of form). The `/predict` endpoint solves a *different,
+  harder* task — arbitrary player A vs B from each one's latest solo
+  snapshot — a joint distribution the model never trained on. After
+  correctly symmetrizing out XGBoost's slot bias, predictions are only
+  weakly discriminative on non-lopsided matchups. It is **not** a
+  calibrated betting tool. This is model-agnostic (a problem-framing
+  gap, not an algorithm or wiring bug).
+- **`bp_ratio`** is `+Inf` in ~83% of rows (divide-by-zero in
+  `match_stats.R`); the degenerate `bp_ratio_av_*` columns are dropped
+  before modelling. A principled root-cause fix is pending.
+
+### Future work (separate modelling project)
+
+A usable interactive predictor needs a serving-consistent
+representation or a purpose-built player-rating model (calibrated Elo
+/ Bradley–Terry), then re-evaluation *as an A-vs-B task*. Out of scope
+for this refactor, whose deliverable was a correct, tested,
+honestly-evaluated pipeline.
 
 ## Data
 

@@ -66,6 +66,10 @@ Rscript analysis/train_model.R
 Rscript analysis/tune_model.R
 Rscript tests/testthat.R
 
+# Train the final model on ALL data + promote -> models/model.rds
+# (model .rds are gitignored; run this once on a fresh clone)
+Rscript analysis/train_production_model.R
+
 # Serve the prediction API on port 8000
 plumber::pr_run(plumber::pr("api.R"))
 ```
@@ -107,10 +111,14 @@ plumber::pr_run(plumber::pr("api.R"))
   `match_stats.R`). `analysis/train_model.R` drops the degenerate
   `bp_ratio_av_*` columns; a root-cause formula fix is a pending
   deliberate feature change (changes model inputs).
-- **Stale training data — being resolved.** Old model trained on
-  2018–2022; step 4 retrains on 2020–2026 YTD with a time-based
-  holdout. `models/model.rds` still serves the OLD model until a new
-  one is deliberately promoted (4d).
+- **Interactive predictor is experimental (train/serve task gap).**
+  Model trained/validated on historical match rows; the `/predict`
+  A-vs-B task is a different, harder joint distribution. After
+  symmetrizing out XGBoost's slot bias, it's weakly discriminative on
+  non-lopsided pairs. Model-agnostic (problem framing, not algorithm/
+  wiring). Shipped labelled experimental; a real interactive model
+  (serving-consistent repr / Bradley–Terry-style rating) is future
+  work. Old leaky model kept as `models/model_legacy.rds`.
 - **`renv` lockfile is lean by design.** `renv.lock` locks the
   `DESCRIPTION` deps + transitive (currently 131 pkgs: runtime +
   tidymodels training stack + testthat). The legacy notebooks' wider
@@ -136,10 +144,17 @@ See `git log refresh-2026` for the play-by-play. High-level arc:
    `DESCRIPTION` dependency contract)
 4. ✅ Retrain on fresh data, `tidymodels`/XGBoost, time-based holdout
    (2 target leaks found & fixed; honest baseline ≈0.856; tuning =
-   no gain. New model NOT yet promoted to the app — that's step 7.)
+   no gain)
 5. ✅ Legacy `.Rmd` notebooks retired; lean `analysis/eda.qmd`
    (sources `R/`, leak-free data) replaces their EDA
 6. ✅ `README.md` rewritten (honest numbers) + `testthat` regression
-   suite (`tests/testthat/`, 28 tests guarding the leak/bug fixes)
-7. Clean up Plumber API + Dockerize + deploy (incl. wiring the API
-   to the new leak-free model)
+   suite (`tests/testthat/`, 36 tests)
+7. ✅ Production model trained on all data + promoted; API rewired to
+   it (symmetrized, parity-checked); `surface`/`best_of` added; no
+   Docker (solo/local). Interactive predictor shipped **experimental**
+   — a train/serve task-mismatch (documented) makes it weakly
+   discriminative; a real interactive model is future work.
+
+**Refactor complete (7/7).** Net: a tested, leak-free, honestly-
+evaluated pipeline that surfaced both the original leakage *and* the
+interactive train/serve gap that was previously hidden.
