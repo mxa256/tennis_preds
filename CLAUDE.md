@@ -32,11 +32,15 @@ tennis_preds/
 │   ├── dummify.R           #   dummify_clean(clean) — one-hot + drop non-model cols
 │   ├── split_train_ids.R   #   split_train_ids(clean) → list(train, ids)
 │   └── predict.R           #   Inference: get_recent_averages/prepare_features/predict_winner
-├── analysis/               # (future) Quarto orchestration docs
-├── markdowns/              # Legacy Rmd notebooks (being decomposed into R/)
+├── analysis/               # Orchestration + EDA (side effects live here)
+│   ├── build_training_data.R #  compose R/ pipeline → data/*.csv
+│   ├── train_model.R       #   time-split baseline XGBoost + holdout
+│   ├── tune_model.R        #   time-aware hyperparameter search
+│   └── eda.qmd             #   lean Quarto EDA (sources R/)
+├── tests/testthat/         # Regression suite (run tests/testthat.R)
 ├── data/                   # Generated training/test CSVs (regenerable from pipeline)
-├── models/                 # (future) Final saved .rds artifacts
-├── mlruns/                 # MLflow experiment tracking (gitignored)
+├── models/                 # Saved .rds (model.rds served; *_baseline/_tuned gitignored)
+├── mlruns/                 # Legacy MLflow tracking (gitignored)
 ├── api.R                   # Plumber API serving the XGBoost model
 ├── index.html              # Static frontend (calls localhost:8000/predict)
 └── tennis_preds.Rproj
@@ -54,8 +58,13 @@ From the project root, in R/RStudio:
 # Refresh upstream match data from Sackmann's repo
 source("R/refresh_data.R")
 
-# Re-run the data prep pipeline (legacy monolith — being refactored)
-rmarkdown::render("markdowns/Tennis_Data_Prep.Rmd")
+# Re-run the data prep pipeline (R/ functions composed in analysis/)
+Rscript analysis/build_training_data.R
+
+# Train / tune (time-based holdout) and run the regression suite
+Rscript analysis/train_model.R
+Rscript analysis/tune_model.R
+Rscript tests/testthat.R
 
 # Serve the prediction API on port 8000
 plumber::pr_run(plumber::pr("api.R"))
@@ -85,10 +94,9 @@ plumber::pr_run(plumber::pr("api.R"))
 ## Known issues
 
 - **SvGms P2-slot bug — fixed in `R/predict.R`** (commit dc6616e) and
-  now guarded by `tests/testthat/test-predict-svgms.R` (the Phase-6
-  regression test this note used to promise). The identical bug still
-  lurks at `markdowns/deployment_test.Rmd:57`; that file is a manual
-  test harness slated for deletion in step 5.
+  guarded by `tests/testthat/test-predict-svgms.R`. The old buggy
+  `deployment_test.Rmd` copy was deleted with the legacy notebooks
+  (step 5) — fully resolved.
 - **Two target leaks found & fixed in step 4** (the original project's
   headline accuracy was inflated and never caught): end-of-history Elo
   (commit ea6acde) and shuffle-order rolling averages (commit 90b6289,
@@ -103,18 +111,15 @@ plumber::pr_run(plumber::pr("api.R"))
   2018–2022; step 4 retrains on 2020–2026 YTD with a time-based
   holdout. `models/model.rds` still serves the OLD model until a new
   one is deliberately promoted (4d).
-- **`renv` lockfile is lean by design.** `renv.lock` locks only the
-  ~10 runtime deps in `DESCRIPTION` (+ transitive = 76 pkgs), via
-  explicit snapshot. The legacy `markdowns/` ML stack (keras,
-  tidymodels, caret, …) is intentionally NOT locked — those notebooks
-  are retired/migrated in step 5. Re-snapshot after the step-4 retrain
-  adds modelling deps.
+- **`renv` lockfile is lean by design.** `renv.lock` locks the
+  `DESCRIPTION` deps + transitive (currently 131 pkgs: runtime +
+  tidymodels training stack + testthat). The legacy notebooks' wider
+  ML zoo (keras, caret, …) was never locked and those notebooks are
+  now deleted (step 5).
 - **Hard-coded absolute paths: `api.R` fixed** (`here::here()`, commit
   af62626; served model now at `models/model.rds`). The legacy
-  `Tennis_Data_Prep.Rmd` (superseded by `R/`), `Preprocessing.Rmd`,
-  `MLF_HP_Tuning.Rmd`, `Tennis_Models.Rmd`, `Unseen_Test_Set.Rmd`,
-  `deployment_test.Rmd` still have absolute paths — deferred to step 5
-  (Quarto migration / deletion), not worth churning first.
+  notebooks that carried the other absolute paths were deleted in
+  step 5 — resolved. `analysis/` scripts use `here::here()`.
 
 ## Refactor status
 
@@ -128,13 +133,12 @@ See `git log refresh-2026` for the play-by-play. High-level arc:
    prune_columns → dummify → split_train_ids; two latent bugs fixed
    along the way — `gameswon_perc`, rolling-averages split)
 3. ✅ Lean `renv` + portable paths (`api.R` via `here::here()`;
-   `DESCRIPTION` dependency contract; legacy `.Rmd` paths deferred to
-   step 5)
+   `DESCRIPTION` dependency contract)
 4. ✅ Retrain on fresh data, `tidymodels`/XGBoost, time-based holdout
    (2 target leaks found & fixed; honest baseline ≈0.856; tuning =
    no gain. New model NOT yet promoted to the app — that's step 7.)
-5. 🟡 Migrate `.Rmd` → Quarto, separate EDA from pipeline (also
-   deletes the legacy notebooks + their absolute paths)
+5. ✅ Legacy `.Rmd` notebooks retired; lean `analysis/eda.qmd`
+   (sources `R/`, leak-free data) replaces their EDA
 6. ✅ `README.md` rewritten (honest numbers) + `testthat` regression
    suite (`tests/testthat/`, 28 tests guarding the leak/bug fixes)
 7. Clean up Plumber API + Dockerize + deploy (incl. wiring the API
