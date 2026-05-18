@@ -83,24 +83,26 @@ plumber::pr_run(plumber::pr("api.R"))
 - **Data is fetched, not snapshotted.** Don't commit match-data CSVs from
   upstream — `R/refresh_data.R` re-syncs them. Small curated lookups like
   `R/data/player_heights.csv` are fine to commit.
-- **The repo is mid-refactor.** When extracting code from the legacy
-  monolith into `R/`, preserve behaviour exactly. Style improvements
-  (collapsing the `data1 → data2 → ...` chain, replacing per-set unrolled
-  blocks with `purrr::map`, etc.) go in separate follow-up commits.
-  Genuine bugs found during a carve **do** get fixed — but as their own
-  clearly-labelled `fix(...)` commit, separate from the faithful
-  extraction (e.g. the SvGms, `gameswon_perc`, and rolling-averages
-  split fixes).
+- **The 7-step refactor is complete** (see Refactor status). The carve
+  discipline still governs future changes to `R/`: preserve behaviour
+  in mechanical moves; genuine bugs get their own clearly-labelled
+  `fix(...)` commit separate from any faithful extraction (as the
+  SvGms / `gameswon_perc` / rolling-split / Elo-leak fixes did).
 - **Commit messages: no AI co-author trailer.** Do not append
   `Co-Authored-By: Claude` (or any AI/assistant co-author line) to
   commits in this repo. End the message at its last content line.
 
 ## Known issues
 
-- **SvGms P2-slot bug — fixed in `R/predict.R`** (commit dc6616e) and
-  guarded by `tests/testthat/test-predict-svgms.R`. The old buggy
-  `deployment_test.Rmd` copy was deleted with the legacy notebooks
-  (step 5) — fully resolved.
+- **Three latent bugs found during the carve, all fixed in their own
+  `fix()` commits + regression-tested** (`tests/testthat/`):
+  `gameswon_perc` dataset-scalar (7e77655), rolling-averages
+  player-split (90b6289-era), and the SvGms P2-slot bug in
+  `R/predict.R` (dc6616e). The SvGms-specific test was retired in
+  step 7 (it covered the now-removed 22-feature inference path); the
+  player→slot correctness it guarded is re-asserted by
+  `test-inference.R`. The old buggy `deployment_test.Rmd` copy was
+  deleted with the legacy notebooks (step 5) — fully resolved.
 - **Two target leaks found & fixed in step 4** (the original project's
   headline accuracy was inflated and never caught): end-of-history Elo
   (commit ea6acde) and shuffle-order rolling averages (commit 90b6289,
@@ -158,3 +160,33 @@ See `git log refresh-2026` for the play-by-play. High-level arc:
 **Refactor complete (7/7).** Net: a tested, leak-free, honestly-
 evaluated pipeline that surfaced both the original leakage *and* the
 interactive train/serve gap that was previously hidden.
+
+## Next project: fix poor production (interactive) performance
+
+The refactor is done; the **next major effort is a modelling project**
+to make the deployed `/predict` endpoint actually useful. Problems
+identified with the currently-deployed model (all documented in Known
+issues; do not re-derive these the hard way):
+
+1. **Train/serve task mismatch (the core problem).** The model is
+   trained/validated on *historical match rows* (two players' form
+   as-of one real match they played — real draws pair similar-tier
+   opponents, features jointly consistent). Serving feeds an
+   *arbitrary* A-vs-B pair built from each player's *solo latest
+   snapshot* — a joint distribution never seen in training. Result:
+   after correctly symmetrizing out XGBoost's slot bias, predictions
+   are weakly discriminative on non-lopsided pairs (≈0.5; e.g. #1 vs
+   #1921 ≈ 0.54). Honest holdout metrics (≈0.856 / 0.76 competitive)
+   are real but for the *easier historical-row task*, not this one.
+2. **It is model-agnostic.** Not an XGBoost bug, not a wiring bug
+   (serving features verified in-distribution, parity-asserted).
+   Swapping the learner will NOT fix it. Tree no-extrapolation is a
+   minor (~2% OOD) secondary factor only.
+3. **`bp_ratio`** degenerate feature (+Inf ~83% rows) still dropped;
+   root-cause formula fix pending (deliberate feature change).
+
+Suggested directions for the next project: a serving-consistent
+training representation, or a purpose-built player-rating model
+(calibrated Elo / Bradley–Terry) designed for the A-vs-B task, then
+**re-evaluate as an interactive task** (not the historical-row task).
+Keep the time-based-holdout / leak-audit discipline from step 4.
