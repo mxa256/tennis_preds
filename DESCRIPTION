@@ -30,4 +30,6 @@ Imports:
     parsnip,
     workflows,
     yardstick,
-    rsample
+    rsample,
+    tune,
+    dials
