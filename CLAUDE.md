@@ -90,11 +90,18 @@ plumber::pr_run(plumber::pr("api.R"))
   testthat regression test in Phase 6.
 - **Stale training data.** Current model was trained on 2018–2022. Refresh
   in progress to retrain on 2020–2026 YTD with a time-based test split.
-- **No `renv` lockfile yet.** Packages must be installed manually. Lockfile
-  will land later in the refactor.
-- **Hard-coded absolute paths** still exist in `api.R`, `Tennis_Data_Prep.Rmd`,
-  `Preprocessing.Rmd`, `MLF_HP_Tuning.Rmd`, `deployment_test.Rmd`. Will be
-  replaced with `here::here()` once `renv` is in place.
+- **`renv` lockfile is lean by design.** `renv.lock` locks only the
+  ~10 runtime deps in `DESCRIPTION` (+ transitive = 76 pkgs), via
+  explicit snapshot. The legacy `markdowns/` ML stack (keras,
+  tidymodels, caret, …) is intentionally NOT locked — those notebooks
+  are retired/migrated in step 5. Re-snapshot after the step-4 retrain
+  adds modelling deps.
+- **Hard-coded absolute paths: `api.R` fixed** (`here::here()`, commit
+  af62626; served model now at `models/model.rds`). The legacy
+  `Tennis_Data_Prep.Rmd` (superseded by `R/`), `Preprocessing.Rmd`,
+  `MLF_HP_Tuning.Rmd`, `Tennis_Models.Rmd`, `Unseen_Test_Set.Rmd`,
+  `deployment_test.Rmd` still have absolute paths — deferred to step 5
+  (Quarto migration / deletion), not worth churning first.
 
 ## Refactor status
 
@@ -107,8 +114,10 @@ See `git log refresh-2026` for the play-by-play. High-level arc:
    match_stats → assign_player_slots → elo → rolling_averages →
    prune_columns → dummify → split_train_ids; two latent bugs fixed
    along the way — `gameswon_perc`, rolling-averages split)
-3. 🟡 `renv::init()` + replace absolute paths with `here::here()`
-4. Retrain on fresh data via `tidymodels` (XGBoost engine) with a
+3. ✅ Lean `renv` + portable paths (`api.R` via `here::here()`;
+   `DESCRIPTION` dependency contract; legacy `.Rmd` paths deferred to
+   step 5)
+4. 🟡 Retrain on fresh data via `tidymodels` (XGBoost engine) with a
    time-based holdout
 5. Migrate `.Rmd` → Quarto, separate EDA from pipeline
 6. Add `README.md` + minimal `testthat` coverage
