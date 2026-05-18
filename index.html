@@ -74,8 +74,28 @@
     <label for="player2">Player 2:</label>
     <input type="text" id="player2" name="player2" list="player2-list" placeholder="Start typing..." required>
 
+    <label for="surface">Surface:</label>
+    <select id="surface" name="surface">
+      <option value="Hard" selected>Hard</option>
+      <option value="Clay">Clay</option>
+      <option value="Grass">Grass</option>
+    </select>
+
+    <label for="best_of">Best of:</label>
+    <select id="best_of" name="best_of">
+      <option value="3" selected>3 sets</option>
+      <option value="5">5 sets (Slam)</option>
+    </select>
+
     <button type="submit">Predict Winner</button>
   </form>
+
+  <p style="font-size:0.8em;color:#a00;max-width:480px;margin:8px auto;">
+    ⚠️ Experimental. The model is leak-free and honestly evaluated, but
+    was trained on historical match rows; interactive A-vs-B predictions
+    are weakly discriminative on non-lopsided matchups. Not a calibrated
+    betting tool.
+  </p>
 
   <div id="result"></div>
 
@@ -101,11 +121,13 @@ document.getElementById('predictForm').onsubmit = async function(e) {
   e.preventDefault();
   const player1 = document.getElementById('player1').value;
   const player2 = document.getElementById('player2').value;
+  const surface = document.getElementById('surface').value;
+  const best_of = parseInt(document.getElementById('best_of').value, 10);
 
   const response = await fetch('http://localhost:8000/predict', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ player1: player1, player2: player2 })
+    body: JSON.stringify({ player1, player2, surface, best_of })
   });
 
   const data = await response.json();
@@ -115,7 +137,7 @@ document.getElementById('predictForm').onsubmit = async function(e) {
     document.getElementById('result').innerText = `Error: ${data.error}`;
   } else {
     // Extract the probability that player1 wins
-    const player1Probability = data.winner_prediction;
+    const player1Probability = data.p1_win_probability;
 
     // Determine the winner
     let winner, winnerProbability;

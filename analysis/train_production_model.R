@@ -36,7 +36,9 @@ if (length(degenerate)) {
   feat <- setdiff(names(df), ".label")
 }
 df[feat] <- lapply(df[feat], function(c) { c[!is.finite(c)] <- NA; c })
+feat_natural <- feat                       # pre-make.names (pipeline names)
 names(df)[match(feat, names(df))] <- make.names(feat, unique = TRUE)
+feat_modelled <- setdiff(names(df), ".label")  # post-make.names (model names)
 
 cat(sprintf("training final model on ALL %d rows, %d features\n",
             nrow(df), length(feat)))
@@ -53,8 +55,11 @@ cat(sprintf("trained in %.1fs\n",
             as.numeric(difftime(Sys.time(), t0, units = "secs"))))
 
 # Persist the exact training feature schema alongside the model so the
-# serving path can assert parity (prevents silent train/serve drift).
-attr(fit, "feature_schema") <- setdiff(names(df), ".label")
+# serving path can assert parity (prevents silent train/serve drift):
+# _natural = pipeline names the serving row is assembled with;
+# _modelled = post-make.names order the model expects.
+attr(fit, "feature_schema_natural")  <- feat_natural
+attr(fit, "feature_schema") <- feat_modelled
 
 # --- promote: back up the old served model, then replace ------------
 model_path  <- here::here("models", "model.rds")

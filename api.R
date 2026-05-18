@@ -1,14 +1,13 @@
 library(plumber)
-library(dplyr)
+library(parsnip)
+library(workflows)
 library(here)
 
-#Filter
 #* @filter cors
 function(req, res) {
-  res$setHeader("Access-Control-Allow-Origin", "*") 
+  res$setHeader("Access-Control-Allow-Origin", "*")
   res$setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
   res$setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-  
   if (req$REQUEST_METHOD == "OPTIONS") {
     res$status <- 200
     return(list())
@@ -17,92 +16,44 @@ function(req, res) {
   }
 }
 
+# Leak-free production model + per-player latest-form snapshot, both
+# produced by analysis/build_training_data.R + train_production_model.R.
+# R/predict.R assembles the matchup row in the exact training schema
+# (with a hard train/serve parity assert) and symmetrizes over the two
+# slot orderings so P(A beats B) + P(B beats A) == 1.
+#
+# KNOWN LIMITATION (see README "Known limitations"): the model was
+# trained/validated on historical match rows; the interactive A-vs-B
+# task is a different, harder distribution, so probabilities are only
+# weakly discriminative on non-lopsided pairs. This endpoint is
+# EXPERIMENTAL, not a calibrated betting tool.
+source(here::here("R", "predict.R"))
+model   <- readRDS(here::here("models", "model.rds"))
+serving <- load_serving_features()
 
-
-#Load model
-# Served model lives at models/model.rds (stable location, decoupled
-# from the mlruns/<hash>/ artifact path). The step-4 retrain drops a
-# new file here.
-model_path <- here::here("models", "model.rds")
-model <- readRDS(file = model_path)
-
-#Load input data
-data_ids <- read.csv(here::here("data", "data_ids.csv"))
-data_train <- read.csv(here::here("data", "data_train.csv"))
-
-full_data <- cbind(data_ids, data_train)
-
-to_keep <- c("rank_diff", 
-             "rank_P_1",
-             "rank_P_2",
-             "ht_P_1", 
-             "ht_P_2", 
-             "age_P_1", 
-             "age_P_2", 
-             "set_tot_av_P_1", 
-             "set_tot_av_P_2", 
-             "ace_av_P_1", 
-             "ace_av_P_2", 
-             "df_av_P_1", 
-             "df_av_P_2", 
-             "svpt_av_P_1", 
-             "svpt_av_P_2", 
-             "X1stIn_av_P_1", 
-             "X1stIn_av_P_2", 
-             "X1stWon_av_P_1", 
-             "X1stWon_av_P_2", 
-             "X2ndWon_av_P_1", 
-             "X2ndWon_av_P_2", 
-             "SvGms_av_P_1",
-             "SvGms_av_P_2",
-             "id_P_1", 
-             "id_P_2", 
-             "name_P_1", 
-             "name_P_2",
-             "tourney_date_P_1",
-             "Win_P_1")
-
-input_data <- full_data %>% select(c(to_keep, "Win_P_1"))
-
-cols_to_scale <- c("ht_P_1", 
-                   "ht_P_2", 
-                   "age_P_1", 
-                   "age_P_2", 
-                   "set_tot_av_P_1", 
-                   "set_tot_av_P_2", 
-                   "ace_av_P_1", 
-                   "ace_av_P_2", 
-                   "df_av_P_1", 
-                   "df_av_P_2", 
-                   "svpt_av_P_1", 
-                   "svpt_av_P_2", 
-                   "X1stIn_av_P_1", 
-                   "X1stIn_av_P_2", 
-                   "X1stWon_av_P_1", 
-                   "X1stWon_av_P_2", 
-                   "X2ndWon_av_P_1", 
-                   "X2ndWon_av_P_2", 
-                   "SvGms_av_P_1",
-                   "SvGms_av_P_2")
-
-#Scale
-input_data[cols_to_scale] <- scale(input_data[cols_to_scale])
-
-
-source(here::here("R", "predict.R")) # Ensure prepare_features & predict_winner are defined
-
-# Define endpoint for prediction
+#* Predict P(player1 beats player2) in a given match context.
 #* @param player1 Character: Name of Player 1
 #* @param player2 Character: Name of Player 2
-#Throw error if player not found
+#* @param surface Character: Hard | Clay | Grass (default Hard)
+#* @param best_of Integer: 3 or 5 (default 3)
 #* @post /predict
-function(player1, player2) {
+function(player1, player2, surface = "Hard", best_of = 3) {
   tryCatch({
-    prediction <- predict_winner(player1, player2, input_data, model)
-    list(winner_prediction = prediction)
+    p <- predict_winner(player1, player2, surface, as.integer(best_of),
+                         model, serving)
+    list(
+      player1 = player1,
+      player2 = player2,
+      surface = surface,
+      best_of = as.integer(best_of),
+      p1_win_probability = round(as.numeric(p), 4),
+      disclaimer = paste(
+        "Experimental. Leak-free model, but trained on historical",
+        "match rows; weak discrimination on non-lopsided matchups.",
+        "Not a calibrated betting tool."
+      )
+    )
   }, error = function(e) {
-    # Return error as JSON
-    res <- list(error = e$message)
-    return(res)
+    list(error = e$message)
   })
 }

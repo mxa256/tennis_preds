@@ -74,5 +74,23 @@ sp     <- step("split_train_ids",      split_train_ids(dc))
 write.csv(sp$train, here::here("data", "data_train.csv"), row.names = FALSE)
 write.csv(sp$ids,   here::here("data", "data_ids.csv"),   row.names = FALSE)
 
-cat(sprintf("\nWrote data/data_train.csv (%d x %d) and data/data_ids.csv (%d x %d)\n",
-            nrow(sp$train), ncol(sp$train), nrow(sp$ids), ncol(sp$ids)))
+# Serving snapshot: at predict time the API has no match to roll from,
+# so persist each player's MOST RECENT as-of form row (neutral names
+# from the long frame) -- rank/ht/age/hand + every *_av feature. The
+# inference path (R/predict.R) places p1's snapshot in the _P_1 model
+# columns and p2's in _P_2. Chronological latest = leak-free "current
+# form", consistent with how training rows were built.
+av_cols <- grep("_av$", names(rolled$long), value = TRUE)
+keep <- c("name", "rank", "ht", "age", "hand", av_cols)
+serving <- rolled$long %>%
+  dplyr::arrange(name, tourney_date, match_num) %>%
+  dplyr::group_by(name) %>%
+  dplyr::slice_tail(n = 1) %>%
+  dplyr::ungroup() %>%
+  dplyr::select(dplyr::all_of(keep))
+write.csv(serving, here::here("data", "serving_features.csv"), row.names = FALSE)
+
+cat(sprintf(
+  "\nWrote data/data_train.csv (%d x %d), data/data_ids.csv (%d x %d), data/serving_features.csv (%d x %d)\n",
+  nrow(sp$train), ncol(sp$train), nrow(sp$ids), ncol(sp$ids),
+  nrow(serving), ncol(serving)))
