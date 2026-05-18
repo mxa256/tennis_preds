@@ -55,7 +55,10 @@ rsconnect/
 .DS_Store
 
 
-# Model artifacts are regenerable (committed data + seeded
-# analysis/train_production_model.R). Not tracked to avoid multi-MB
-# binary churn on every retrain. Run that script to produce model.rds.
+# Generated artifacts are regenerable from the seeded scripts +
+# upstream data; not tracked (committing them bloated git history to
+# 600MB+ of binary churn -- purged via git-filter-repo). On a fresh
+# clone run analysis/build_training_data.R then
+# analysis/train_production_model.R to (re)create these.
 models/*.rds
+data/*.csv
