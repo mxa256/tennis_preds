@@ -1,0 +1,131 @@
+---
+title: "ATP Predictor — Exploratory Data Analysis"
+author: "Mona Ascha"
+format:
+  html:
+    toc: true
+    code-fold: true
+    df-print: kable
+execute:
+  warning: false
+  message: false
+---
+
+```{r setup}
+library(dplyr)
+library(ggplot2)
+library(here)
+
+# EDA only -- the pipeline itself lives in tested R/ functions. This
+# document SOURCES them; it does not redefine any logic.
+source(here::here("R", "impute_heights.R"))
+source(here::here("R", "load_matches.R"))
+
+# Raw cleaned matches (for surface / height / who-wins EDA) ...
+matches <- clean_matches(load_atp_matches(2020:2026))
+
+# ... and the leak-free modelling frame produced by
+# analysis/build_training_data.R (run that first if these are stale).
+train <- read.csv(here::here("data", "data_train.csv"), check.names = FALSE)
+ids   <- read.csv(here::here("data", "data_ids.csv"),   check.names = FALSE)
+```
+
+## Dataset at a glance
+
+```{r overview}
+d <- as.Date(as.character(ids$tourney_date_P_1), format = "%Y%m%d")
+tibble::tibble(
+  rows          = nrow(train),
+  features      = ncol(train),
+  date_from     = format(min(d)),
+  date_to       = format(max(d)),
+  label_balance = round(mean(ids$Win_P_1), 3)
+)
+```
+
+The seeded 50/50 player-slot assignment is why the label balance sits
+at ~0.5 — a model that ignores the features can do no better than a
+coin flip, by construction.
+
+## Who wins the most? (sanity / domain check)
+
+```{r top-players}
+winner <- ifelse(ids$Win_P_1 == 1, ids$name_P_1, ids$name_P_2)
+as.data.frame(sort(table(winner), decreasing = TRUE)[1:15])
+```
+
+The usual elite names dominate — a basic sanity check that the
+slot/label plumbing is correct.
+
+## Win rate by surface
+
+```{r surface}
+matches %>%
+  count(surface) %>%
+  mutate(share = round(n / sum(n), 3)) %>%
+  arrange(desc(n))
+```
+
+Hard courts dominate the calendar, then clay, then grass — consistent
+with the ATP tour structure.
+
+## Player height
+
+```{r height}
+ht <- c(matches$winner_ht, matches$loser_ht)
+ht <- ht[!is.na(ht)]
+ggplot(data.frame(ht = ht), aes(ht)) +
+  geom_histogram(binwidth = 2, fill = "#0066FF", colour = "white") +
+  labs(x = "height (cm)", y = "player-matches",
+       title = "Height distribution") +
+  theme_minimal()
+```
+
+## Feature signal is weak individually — by design, not by accident
+
+```{r feature-corr}
+y   <- ids$Win_P_1
+num <- train[sapply(train, is.numeric)]
+num <- num[, sapply(num, function(c) all(is.finite(c)))]   # skip Inf bp_ratio
+cors <- sort(sapply(num, function(c) cor(c, y, use = "complete.obs")),
+             decreasing = TRUE)
+data.frame(top = round(head(cors, 8), 3))
+```
+
+No single feature is strongly correlated with the outcome (|r| well
+under 0.25). This is the *expected* profile after the step-4 leakage
+fixes — the model's accuracy comes from XGBoost combining ~100 weak
+honest signals, not from one outcome-encoding feature.
+
+## Elo is leak-free (the headline correction)
+
+```{r elo-asof}
+# If as-of Elo were still the old end-of-history value, each player's
+# Elo would be a single constant -> within-player sd == 0.
+chk <- data.frame(name = ids$name_P_1, elo = train$latest_elo_av_P_1) %>%
+  group_by(name) %>% filter(n() >= 15) %>%
+  summarise(sd_elo = sd(elo, na.rm = TRUE), .groups = "drop")
+tibble::tibble(
+  players          = nrow(chk),
+  median_within_sd = round(median(chk$sd_elo, na.rm = TRUE), 2)
+)
+```
+
+Median within-player Elo sd is well above zero: each player's rating
+moves over time, confirming the as-of-match (leak-free) Elo. Before
+the fix this value was exactly **0**.
+
+## Why pooled accuracy is high but honest
+
+```{r competitiveness}
+elo_gap <- abs(train$latest_elo_av_P_1 - train$latest_elo_av_P_2)
+data.frame(
+  bucket = c("lopsided (|Elo gap| >= median)", "competitive (< median)"),
+  n      = c(sum(elo_gap >= median(elo_gap)), sum(elo_gap < median(elo_gap)))
+)
+```
+
+Many ATP matches are lopsided (elite vs. qualifier) and trivially
+predictable; the honest difficulty signal is accuracy on the
+*competitive* subset (~0.76), not the pooled figure (~0.86). See
+`README.md` for the full model performance table.
