@@ -1,5 +1,6 @@
 library(plumber)
 library(dplyr)
+library(here)
 
 #Filter
 #* @filter cors
@@ -18,13 +19,16 @@ function(req, res) {
 
 
 
-#Load model 
-model_path <- "/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/mlruns/553438081521013443/602c02abd9d84d8aa1cb4b9a5612d087/artifacts/model.rds"
+#Load model
+# Served model lives at models/model.rds (stable location, decoupled
+# from the mlruns/<hash>/ artifact path). The step-4 retrain drops a
+# new file here.
+model_path <- here::here("models", "model.rds")
 model <- readRDS(file = model_path)
 
 #Load input data
-data_ids <- read.csv("/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/data/data_ids.csv")
-data_train <- read.csv("/Users/mona/Dropbox/Desktop/Tennis_Analytics/tennis_preds/data/data_train.csv")
+data_ids <- read.csv(here::here("data", "data_ids.csv"))
+data_train <- read.csv(here::here("data", "data_train.csv"))
 
 full_data <- cbind(data_ids, data_train)
 
@@ -85,7 +89,7 @@ cols_to_scale <- c("ht_P_1",
 input_data[cols_to_scale] <- scale(input_data[cols_to_scale])
 
 
-source("R/predict.R") # Ensure prepare_features & predict_winner are defined
+source(here::here("R", "predict.R")) # Ensure prepare_features & predict_winner are defined
 
 # Define endpoint for prediction
 #* @param player1 Character: Name of Player 1
