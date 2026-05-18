@@ -32,4 +32,5 @@ Imports:
     yardstick,
     rsample,
     tune,
-    dials
+    dials,
+    testthat
