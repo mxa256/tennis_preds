@@ -1,0 +1,24 @@
+Package: tennispreds
+Title: ATP Men's Tennis Match-Outcome Predictor
+Version: 0.0.0.9000
+Authors@R: person("Mona", "Ascha", role = c("aut", "cre"))
+Description: Internal project (not a distributed package): the
+    Tennis_Data_Prep pipeline carved into R/ pure functions plus a
+    Plumber prediction API. This DESCRIPTION declares the lean runtime
+    dependency contract -- only what R/ and api.R actually use -- and
+    is the basis for the explicit renv lockfile. The legacy markdowns/
+    notebooks pull in a much larger ML stack (keras, tidymodels,
+    caret, ...); those are intentionally NOT locked here because they
+    are being retired/migrated in refactor step 5.
+Encoding: UTF-8
+Imports:
+    dplyr,
+    tidyr,
+    naniar,
+    stringr,
+    lubridate,
+    runner,
+    fastDummies,
+    here,
+    plumber,
+    xgboost
