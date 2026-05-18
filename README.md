@@ -1,54 +1,95 @@
-# ATP Match Predictions Model
+# ATP Tennis Match-Outcome Predictor
 
-## Overview
-The ATP Match Predictions Model predicts the outcomes (winner vs. loser) of tennis matches played by professional players on the ATP tour between 2018 and 2022, as well as on a separate unseen test set consisting of 2023 matches.
+Given two ATP men's singles players plus match context, predict the
+probability that player 1 wins. Trained on Jeff Sackmann's
+[`tennis_atp`](https://github.com/JeffSackmann/tennis_atp) match data,
+served via a Plumber API behind a static HTML frontend.
+
+> **Status:** mid-modernisation on the `refresh-2026` branch. The data
+> pipeline has been carved from a legacy notebook into a tested
+> pure-function library, two serious data leaks were found and fixed,
+> and the model has an honest, leak-free baseline. See
+> [Model performance](#model-performance) and
+> [`CLAUDE.md`](CLAUDE.md) for the full state.
+
+## Pipeline
+
+The data prep is a chain of pure functions in `R/`, each taking a data
+frame and returning it enriched:
+
+```
+load_atp_matches → clean_matches        # R/load_matches.R (+ impute_heights.R)
+  → add_set_features                     # R/parse_score.R
+  → add_set_winners                      # R/set_winners.R
+  → add_match_stats                      # R/match_stats.R
+  → assign_player_slots(seed)            # R/assign_player_slots.R  (neutral p1/p2 + label)
+  → add_elo_features                     # R/elo.R   (as-of-match Elo)
+  → add_rolling_averages                 # R/rolling_averages.R (30-match form, chronological)
+  → prune_columns                        # R/prune_columns.R
+  → dummify_clean                        # R/dummify.R
+  → split_train_ids → {train, ids}       # R/split_train_ids.R
+```
+
+Champion engine: XGBoost on ~100 engineered features (serve/return %,
+point dominance, break-point ratios, 30-match rolling form, as-of Elo
+and Elo-derived odds).
+
+## How to run
+
+Dependencies are pinned with [`renv`](https://rstudio.github.io/renv/)
+(`renv::restore()` to install). From the project root:
+
+```r
+source("R/refresh_data.R")                 # sync upstream ATP data
+Rscript analysis/build_training_data.R     # run pipeline -> data/*.csv
+Rscript analysis/train_model.R             # time-split baseline + holdout metrics
+Rscript analysis/tune_model.R              # (optional) hyperparameter search
+Rscript tests/testthat.R                   # regression suite
+plumber::pr_run(plumber::pr("api.R"))      # serve predictions on :8000
+```
+
+## Model performance
+
+Evaluated on a **time-based holdout** (train ≤2024, test 2025–2026
+YTD) — *not* a random split, which would leak future form into the
+past via the rolling-average features.
+
+| | Accuracy | AUC | Brier |
+|---|---|---|---|
+| Baseline XGBoost (honest) | **0.856** | 0.940 | 0.100 |
+| — on lopsided matches | 0.954 | | |
+| — on competitive matches | 0.758 | | |
+| Trivial "higher Elo wins" | 0.635 | | |
+
+Hyperparameter tuning over time-aware folds produced **no meaningful
+improvement** — the ceiling is set by features/data, not the knobs.
+
+> ⚠️ **Earlier reported numbers (e.g. AUC ≈ 0.91, accuracy ≈ 0.83)
+> were inflated by two target leaks** — end-of-history Elo and
+> shuffle-order rolling averages — now fixed (`R/elo.R`,
+> `R/rolling_averages.R`) and guarded by regression tests. Do not cite
+> the pre-fix figures.
 
 ## Data
-The data was collected from January 2018 to December 2022, sourced from Jeff Sackman, who compiles comprehensive ATP match data. The dataset consists of **12,815 observations** with **49 columns**, covering match statistics such as match location, surface, points won, rankings, and player statistics.
 
-## Key Findings from Exploratory Data Analysis (EDA)
-- **Top Players**: The top 20 players with the most match wins in the past five years include well-known names like Novak Djokovic, Rafael Nadal, and Roger Federer.
-- **Surface Impact**: Win percentages vary by surface (hard court, grass, clay), with different players excelling on different surfaces.
-- **Player Height**: Taller players tend to have stronger serves, though there is a tradeoff in terms of agility.
+Sackmann's match-level ATP data, currently 2020–2026 YTD (~13k
+modelling rows after cleaning). Upstream lives **outside** the repo at
+`../tennis_atp-master/` and is fetched, not vendored.
 
-## Preprocessing
-- **Data Removal**: Matches from the NextGen Finals and Laver Cup were removed as these are exhibition matches and differ in scoring rules and player selection.
-- **Missing Data**: Missing values were imputed for variables like seed and player height, and unhelpful columns were dropped, leaving **11,998 observations**.
-- **Feature Extraction**: Variables such as Elo ratings, serve statistics, break points, and match outcomes were created for each player.
+EDA domain notes (still valid): match outcomes vary by surface;
+taller players tend to serve bigger; the field is dominated by a
+small set of elite players, which is why pooled accuracy is high while
+*competitive*-match accuracy is the honest difficulty signal.
 
-## Feature Selection
-- **Random Forest** and **Principal Component Analysis (PCA)** were used to select the top 20 features for model training.
-- **PCA Scree Plot**: An elbow was identified around 10 components, suggesting the optimal number of features.
+## Layout
 
-## Model Development
-### Preliminary Models Tested
-- Random Forest with SVM (Radial Kernel)
-- Random Forest with XGBoost
+- `R/` — pure-function pipeline + inference (sourced; not a package)
+- `analysis/` — orchestration scripts (side effects live here)
+- `tests/testthat/` — regression suite (run `tests/testthat.R`)
+- `api.R` / `index.html` — Plumber API + static frontend
+- `markdowns/` — legacy notebooks (being retired/migrated)
+- `CLAUDE.md` — detailed context, conventions, refactor status
 
-### Hyperparameter Tuning with MLflow
-Hyperparameters such as **C**, **Gamma**, **Max Depth**, and **Eta** were optimized for different models using MLflow.
+## Author
 
-### Final Models
-- **Random Forest + SVM (Radial Kernel)**
-  - F1 Score: 0.738, AUC: 0.825, Accuracy: 0.75
-- **Random Forest + XGBoost**
-  - F1 Score: 0.817, AUC: 0.907, Accuracy: 0.828
-
-### Metrics Collected
-The model's performance was evaluated using metrics such as **F1-score**, **AUC**, **Precision**, **Recall**, and **Test Accuracy**.
-
-## Results
-- The model’s performance on the 2023 test set showed a **F1 score** range of **0.648 to 0.817** for different model configurations.
-- **Top performing model**: Random Forest + XGBoost with optimal hyperparameters achieved an **AUC of 0.907** and **Test Accuracy of 0.828**.
-
-## Model Limitations
-- **Data Drift**: The model may face performance degradation over time due to the emergence of new players and the aging of older players, necessitating model retraining.
-
-## Deployment
-Deployment is still pending.
-
-## Authors
-- **Mona Ascha** (Author)
-
-## Last Updated
-- **November 7, 2024**
+Mona Ascha
