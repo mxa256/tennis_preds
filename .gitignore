@@ -53,3 +53,7 @@ rsconnect/
 
 # macOS Finder metadata
 .DS_Store
+
+# Step-4 baseline model artifact (regenerable via analysis/train_model.R;
+# not the served model, which is models/model.rds)
+models/model_baseline.rds
