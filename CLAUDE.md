@@ -88,8 +88,20 @@ plumber::pr_run(plumber::pr("api.R"))
   identical bug still lurks at `markdowns/deployment_test.Rmd:57`; that file
   is a manual test harness slated for deletion and will be replaced by a
   testthat regression test in Phase 6.
-- **Stale training data.** Current model was trained on 2018–2022. Refresh
-  in progress to retrain on 2020–2026 YTD with a time-based test split.
+- **Two target leaks found & fixed in step 4** (the original project's
+  headline accuracy was inflated and never caught): end-of-history Elo
+  (commit ea6acde) and shuffle-order rolling averages (commit 90b6289,
+  the dominant one). Honest leak-free baseline on the 2025–26
+  time-based holdout: accuracy ≈ 0.856 (0.95 lopsided / 0.76
+  competitive), AUC 0.940. **Never quote pre-fix (~0.92) numbers.**
+- **`bp_ratio` is +Inf in ~83% of rows** (divide-by-zero in
+  `match_stats.R`). `analysis/train_model.R` drops the degenerate
+  `bp_ratio_av_*` columns; a root-cause formula fix is a pending
+  deliberate feature change (changes model inputs).
+- **Stale training data — being resolved.** Old model trained on
+  2018–2022; step 4 retrains on 2020–2026 YTD with a time-based
+  holdout. `models/model.rds` still serves the OLD model until a new
+  one is deliberately promoted (4d).
 - **`renv` lockfile is lean by design.** `renv.lock` locks only the
   ~10 runtime deps in `DESCRIPTION` (+ transitive = 76 pkgs), via
   explicit snapshot. The legacy `markdowns/` ML stack (keras,
