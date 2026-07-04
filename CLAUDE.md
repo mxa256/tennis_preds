@@ -11,7 +11,10 @@ plus a static HTML frontend.
 
 Champion model: XGBoost on ~50 engineered features (serve %, return %,
 point dominance, break-point conversion, 30-match rolling form averages,
-Elo ratings and Elo-derived match odds).
+Elo ratings and Elo-derived match odds). NOTE (2026-07): leak-free, this
+model is WEAK — acc 0.617 on the time-based holdout, below pure as-of
+Elo (0.630) and "better rank wins" (0.640). See Known issues (third
+leak) and Current project.
 
 ## Layout
 
@@ -103,24 +106,35 @@ plumber::pr_run(plumber::pr("api.R"))
   player→slot correctness it guarded is re-asserted by
   `test-inference.R`. The old buggy `deployment_test.Rmd` copy was
   deleted with the legacy notebooks (step 5) — fully resolved.
-- **Two target leaks found & fixed in step 4** (the original project's
-  headline accuracy was inflated and never caught): end-of-history Elo
-  (commit ea6acde) and shuffle-order rolling averages (commit 90b6289,
-  the dominant one). Honest leak-free baseline on the 2025–26
-  time-based holdout: accuracy ≈ 0.856 (0.95 lopsided / 0.76
-  competitive), AUC 0.940. **Never quote pre-fix (~0.92) numbers.**
+- **THREE target leaks found & fixed** (the original project's headline
+  accuracy was inflated and never caught): end-of-history Elo (commit
+  ea6acde), shuffle-order rolling averages (commit 90b6289), and —
+  found only 2026-07-04, AFTER the refactor shipped — winner-oriented
+  `rank_diff` (commit 9dd74ad): computed pre-slot as winner_rank −
+  loser_rank and untouched by the slot rename, so the label was 100%
+  recoverable from it (25% of xgb gain). It evaded the step-4
+  univariate-AUC audit because it decodes only via interactions with
+  slot-strength features. True leak-free baseline on the 2025–26
+  time-based holdout: XGBoost acc 0.617 / AUC 0.669 / Brier 0.235;
+  pure as-of Elo 0.630 / 0.689; "better ATP rank wins" 0.640. The
+  rolling-form features add nothing over Elo/rank alone (consistent
+  with the ~0.70 bookmaker ceiling in the literature). **Never quote
+  the ~0.92 OR the ~0.856 numbers — both were leakage.** Any
+  improvement claim must beat 0.640 on the time-based holdout.
 - **`bp_ratio` is +Inf in ~83% of rows** (divide-by-zero in
   `match_stats.R`). `analysis/train_model.R` drops the degenerate
   `bp_ratio_av_*` columns; a root-cause formula fix is a pending
   deliberate feature change (changes model inputs).
-- **Interactive predictor is experimental (train/serve task gap).**
-  Model trained/validated on historical match rows; the `/predict`
-  A-vs-B task is a different, harder joint distribution. After
-  symmetrizing out XGBoost's slot bias, it's weakly discriminative on
-  non-lopsided pairs. Model-agnostic (problem framing, not algorithm/
-  wiring). Shipped labelled experimental; a real interactive model
-  (serving-consistent repr / Bradley–Terry-style rating) is future
-  work. Old leaky model kept as `models/model_legacy.rds`.
+- **Interactive predictor is experimental — and the served
+  `models/model.rds` predates the rank_diff fix.** The step-7
+  "train/serve task mismatch" explanation is SUPERSEDED: the primary
+  cause of the interactive collapse (≈0.5 on most pairs; #1 vs #1921
+  ≈ 0.54) is the third leak — training rank_diff encoded
+  winner−loser, while inference always computed p1−p2, so the channel
+  carrying most of the model's discriminative power is empty at serve
+  time. The model was never good; it had the answer key during
+  evaluation. Replacement (calibrated Elo, inherently A-vs-B) is the
+  current project. Old leaky model kept as `models/model_legacy.rds`.
 - **`renv` lockfile is lean by design.** `renv.lock` locks the
   `DESCRIPTION` deps + transitive (currently 131 pkgs: runtime +
   tidymodels training stack + testthat). The legacy notebooks' wider
@@ -145,8 +159,9 @@ See `git log refresh-2026` for the play-by-play. High-level arc:
 3. ✅ Lean `renv` + portable paths (`api.R` via `here::here()`;
    `DESCRIPTION` dependency contract)
 4. ✅ Retrain on fresh data, `tidymodels`/XGBoost, time-based holdout
-   (2 target leaks found & fixed; honest baseline ≈0.856; tuning =
-   no gain)
+   (2 target leaks found & fixed; baseline ≈0.856 believed honest at
+   the time — later found still inflated by a 3rd leak, see Known
+   issues; tuning = no gain, also a leak-era result)
 5. ✅ Legacy `.Rmd` notebooks retired; lean `analysis/eda.qmd`
    (sources `R/`, leak-free data) replaces their EDA
 6. ✅ `README.md` rewritten (honest numbers) + `testthat` regression
@@ -154,39 +169,34 @@ See `git log refresh-2026` for the play-by-play. High-level arc:
 7. ✅ Production model trained on all data + promoted; API rewired to
    it (symmetrized, parity-checked); `surface`/`best_of` added; no
    Docker (solo/local). Interactive predictor shipped **experimental**
-   — a train/serve task-mismatch (documented) makes it weakly
-   discriminative; a real interactive model is future work.
+   — attributed at the time to a train/serve task-mismatch; that
+   explanation was superseded 2026-07 by the 3rd-leak finding (see
+   Known issues).
 
-**Refactor complete (7/7).** Net: a tested, leak-free, honestly-
-evaluated pipeline that surfaced both the original leakage *and* the
-interactive train/serve gap that was previously hidden.
+**Refactor complete (7/7).** Net: a tested, honestly-evaluated
+pipeline. Its evaluation discipline ultimately surfaced all three
+leaks — the third only after the refactor itself had shipped.
 
-## Next project: fix poor production (interactive) performance
+## Current project: a genuinely useful predictor (post-leak-#3)
 
-The refactor is done; the **next major effort is a modelling project**
-to make the deployed `/predict` endpoint actually useful. Problems
-identified with the currently-deployed model (all documented in Known
-issues; do not re-derive these the hard way):
+State as of 2026-07-04 (do not re-derive the hard way):
 
-1. **Train/serve task mismatch (the core problem).** The model is
-   trained/validated on *historical match rows* (two players' form
-   as-of one real match they played — real draws pair similar-tier
-   opponents, features jointly consistent). Serving feeds an
-   *arbitrary* A-vs-B pair built from each player's *solo latest
-   snapshot* — a joint distribution never seen in training. Result:
-   after correctly symmetrizing out XGBoost's slot bias, predictions
-   are weakly discriminative on non-lopsided pairs (≈0.5; e.g. #1 vs
-   #1921 ≈ 0.54). Honest holdout metrics (≈0.856 / 0.76 competitive)
-   are real but for the *easier historical-row task*, not this one.
-2. **It is model-agnostic.** Not an XGBoost bug, not a wiring bug
-   (serving features verified in-distribution, parity-asserted).
-   Swapping the learner will NOT fix it. Tree no-extrapolation is a
-   minor (~2% OOD) secondary factor only.
-3. **`bp_ratio`** degenerate feature (+Inf ~83% rows) still dropped;
+1. **The third leak is fixed in the pipeline (commit 9dd74ad) but the
+   served `models/model.rds` is still the leak-trained artifact.**
+   Re-promoting a leak-free XGBoost is pointless — leak-free it loses
+   to raw Elo — so the serving path should move to the new predictor
+   below rather than get retrained in place.
+2. **Honest bar: 0.640** ("better ATP rank wins" on the 2025–26
+   time-based holdout). Leak-free XGBoost 0.617 / AUC 0.669; pure
+   as-of Elo 0.630 / 0.689 with roughly-calibrated probabilities,
+   slightly overconfident at the extremes. Literature ceiling ≈0.70.
+3. **Direction chosen: calibrated Elo** (surface-aware blend, K-factor
+   / recalibration of the delta→probability mapping). Elo is
+   inherently an A-vs-B rating, so the interactive task IS its native
+   task — no train/serve gap possible. The full Elo walk on 2020–26
+   takes ~6s (`compute_player_elos`), so iteration is cheap.
+4. **`bp_ratio`** degenerate feature (+Inf ~83% rows) still dropped;
    root-cause formula fix pending (deliberate feature change).
 
-Suggested directions for the next project: a serving-consistent
-training representation, or a purpose-built player-rating model
-(calibrated Elo / Bradley–Terry) designed for the A-vs-B task, then
-**re-evaluate as an interactive task** (not the historical-row task).
-Keep the time-based-holdout / leak-audit discipline from step 4.
+Keep the time-based-holdout / leak-audit discipline; every claimed
+improvement must beat 0.640 on the holdout, evaluated leak-free.

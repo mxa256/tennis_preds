@@ -5,11 +5,15 @@ probability that player 1 wins. Trained on Jeff Sackmann's
 [`tennis_atp`](https://github.com/JeffSackmann/tennis_atp) match data,
 served via a Plumber API behind a static HTML frontend.
 
-> **Status:** mid-modernisation on the `refresh-2026` branch. The data
-> pipeline has been carved from a legacy notebook into a tested
-> pure-function library, two serious data leaks were found and fixed,
-> and the model has an honest, leak-free baseline. See
-> [Model performance](#model-performance) and
+> **Status:** the 2026 refactor is complete — the data pipeline was
+> carved from a legacy notebook into a tested pure-function library
+> with time-based evaluation. **Three** target leaks were found and
+> fixed along the way; the third (`rank_diff`, July 2026) was only
+> caught *after* the refactor shipped, so the previously reported
+> "honest" 0.856 baseline was itself still inflated. The true
+> leak-free numbers are far more modest — see
+> [Model performance](#model-performance). Building a genuinely
+> useful predictor (calibrated Elo) is the current project; see
 > [`CLAUDE.md`](CLAUDE.md) for the full state.
 
 ## Pipeline
@@ -65,42 +69,54 @@ past via the rolling-average features.
 
 | | Accuracy | AUC | Brier |
 |---|---|---|---|
-| Baseline XGBoost (honest) | **0.856** | 0.940 | 0.100 |
-| — on lopsided matches | 0.954 | | |
-| — on competitive matches | 0.758 | | |
-| Trivial "higher Elo wins" | 0.635 | | |
+| Baseline XGBoost (leak-free) | 0.617 | 0.669 | 0.235 |
+| Pure as-of Elo (rating diff → odds) | 0.630 | 0.689 | 0.241 |
+| "Better ATP rank wins" | **0.640** | | |
 
-Hyperparameter tuning over time-aware folds produced **no meaningful
-improvement** — the ceiling is set by features/data, not the knobs.
+The sobering, honest picture: the ~100 rolling-form features currently
+add **nothing** over a single Elo rating or the ATP ranking itself.
+That is consistent with the literature — published tennis models and
+even bookmakers top out around ~0.70 accuracy, so ~0.64–0.70 is the
+realistic target range, and any past number far above it should have
+been (and eventually was) diagnosed as leakage.
 
-> ⚠️ **Earlier reported numbers (e.g. AUC ≈ 0.91, accuracy ≈ 0.83)
-> were inflated by two target leaks** — end-of-history Elo and
-> shuffle-order rolling averages — now fixed (`R/elo.R`,
-> `R/rolling_averages.R`) and guarded by regression tests. Do not cite
-> the pre-fix figures.
+> ⚠️ **All earlier reported numbers were inflated by target leaks —
+> including the 0.856/0.940 previously documented here as honest.**
+> Three leaks total: end-of-history Elo and shuffle-order rolling
+> averages (fixed during the refactor, `R/elo.R` /
+> `R/rolling_averages.R`), and winner-oriented `rank_diff` (found
+> July 2026, fixed in `R/assign_player_slots.R`, commit `9dd74ad`) —
+> the training feature encoded winner-minus-loser rank, from which the
+> label was 100% recoverable. All three are guarded by regression
+> tests. Do not cite any pre-fix figure (0.83, 0.91, 0.856, 0.94).
+
+Hyperparameter tuning over time-aware folds produced no improvement on
+the leak-era data; it has not been re-run on leak-free data (feature
+work, not knobs, is the bottleneck).
 
 ## Known limitations
 
-- **The interactive API is experimental.** Those metrics are for the
-  *historical-match-row* task (predict a real match given both
-  players' as-of form). The `/predict` endpoint solves a *different,
-  harder* task — arbitrary player A vs B from each one's latest solo
-  snapshot — a joint distribution the model never trained on. After
-  correctly symmetrizing out XGBoost's slot bias, predictions are only
-  weakly discriminative on non-lopsided matchups. It is **not** a
-  calibrated betting tool. This is model-agnostic (a problem-framing
-  gap, not an algorithm or wiring bug).
+- **The served model (`models/model.rds`) predates the `rank_diff`
+  fix** — it was trained with the leak and its apparent skill rode on
+  it. Because inference always computed `rank_diff` correctly
+  (p1 − p2), the leak channel is empty at serve time, which is why
+  `/predict` collapsed to ≈0.5 on most matchups (e.g. #1 vs #1921
+  ≈ 0.54). The earlier "train/serve task mismatch" explanation is
+  superseded by this finding. The endpoint remains **experimental**
+  until the replacement predictor (below) lands; it is **not** a
+  betting tool.
 - **`bp_ratio`** is `+Inf` in ~83% of rows (divide-by-zero in
   `match_stats.R`); the degenerate `bp_ratio_av_*` columns are dropped
   before modelling. A principled root-cause fix is pending.
 
-### Future work (separate modelling project)
+### Current project: a genuinely useful predictor
 
-A usable interactive predictor needs a serving-consistent
-representation or a purpose-built player-rating model (calibrated Elo
-/ Bradley–Terry), then re-evaluation *as an A-vs-B task*. Out of scope
-for this refactor, whose deliverable was a correct, tested,
-honestly-evaluated pipeline.
+Pure as-of Elo already beats the leak-free XGBoost and is inherently
+an A-vs-B rating — no train/serve gap possible. The plan: a calibrated
+(surface-aware) Elo predictor for the interactive task, evaluated on
+the time-based holdout against the honest bar of **0.640** ("better
+rank wins"). The XGBoost stack stays as the historical-row research
+pipeline.
 
 ## Data
 
@@ -119,7 +135,6 @@ small set of elite players, which is why pooled accuracy is high while
 - `analysis/` — orchestration scripts (side effects live here)
 - `tests/testthat/` — regression suite (run `tests/testthat.R`)
 - `api.R` / `index.html` — Plumber API + static frontend
-- `markdowns/` — legacy notebooks (being retired/migrated)
 - `CLAUDE.md` — detailed context, conventions, refactor status
 
 ## Author
