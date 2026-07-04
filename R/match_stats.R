@@ -25,6 +25,19 @@
 #     row-wise here. This changes model inputs; the retrain (step 4)
 #     consumes the corrected features. Landed as its own fix commit,
 #     separate from the faithful carve (cf. the SvGms fix).
+#   * LEAKAGE FIX (deviates from Rmd, third leak): the original
+#     computed rank_diff = winner_rank - loser_rank HERE, before slot
+#     assignment. assign_player_slots() only renames winner_*/loser_*
+#     prefixed columns, so rank_diff kept its winner-minus-loser value
+#     in both slot halves -- the label was 100%-recoverable from it
+#     (Win_P_1 == (rank_diff == p1_rank - p2_rank) on every row), the
+#     dominant feature (25% of xgb gain) behind the inflated 0.856
+#     "honest" baseline. Univariate leak audits missed it because the
+#     winner-minus-loser sign is marginally independent of the slot
+#     label; it decodes only via interactions with slot-strength
+#     features. rank_diff now lives in assign_player_slots(), computed
+#     p1_rank - p2_rank AFTER the rename -- matching what inference
+#     (R/predict.R) always fed at serve time.
 add_match_stats <- function(matches) {
   # First/second serve made %.
   matches$w_1st_made <- matches$w_1stIn / matches$w_svpt
@@ -76,8 +89,8 @@ add_match_stats <- function(matches) {
   matches$w_bp_ratio <- matches$w_bp_convert_perc / matches$l_bp_convert_perc
   matches$l_bp_ratio <- matches$l_bp_convert_perc / matches$w_bp_convert_perc
 
-  # Rank difference (winner rank - loser rank).
-  matches$rank_diff <- matches$winner_rank - matches$loser_rank
+  # rank_diff is NOT computed here anymore -- see the LEAKAGE FIX note
+  # in the header and assign_player_slots.R, where it now lives.
 
   # Points-to-sets over-performance ratio.
   matches$w_setwon_perc <- matches$w_set_tot / (matches$w_set_tot + matches$l_set_tot)

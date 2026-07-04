@@ -34,3 +34,17 @@ test_that("label is ~50/50 and winner maps to the correct slot", {
   expect_true(all(won$p1_ace >= 11))   # winner side
   expect_true(all(lost$p1_ace <= 20))  # loser side
 })
+
+test_that("rank_diff is slot-oriented, not winner-oriented (leak #3)", {
+  a <- assign_player_slots(make_raw(20), seed = 7)
+
+  # Definition: p1's rank minus p2's rank, on every row.
+  expect_equal(a$rank_diff, a$p1_rank - a$p2_rank)
+
+  # The leak's signature was winner-orientation: make_raw's winner is
+  # always the better rank, so winner_rank - loser_rank is negative on
+  # EVERY row. A slot-oriented rank_diff must flip sign exactly on the
+  # rows where the loser landed in the p1 slot.
+  expect_true(all(a$rank_diff[a$p1_won == 1] < 0))
+  expect_true(all(a$rank_diff[a$p1_won == 0] > 0))
+})

@@ -46,6 +46,15 @@ assign_player_slots <- function(matches, seed = NULL) {
 
   matches <- rbind(top_half, bottom_half)
 
+  # LEAKAGE FIX (third leak; moved here from match_stats.R): rank_diff
+  # must be slot-oriented. The original computed it pre-slot as
+  # winner_rank - loser_rank, and the prefix renames above never touch
+  # it, so the model feature encoded the label (see match_stats.R
+  # header). Computing it here, from the slot ranks, gives the same
+  # quantity inference builds at serve time (p1$rank - p2$rank in
+  # R/predict.R).
+  matches$rank_diff <- matches$p1_rank - matches$p2_rank
+
   # Upset = the lower-ranked (numerically smaller rank) player won.
   matches$p1_upset_scored <- ifelse(matches$p1_rank < matches$p2_rank & matches$p1_won == 1, 1, 0)
   matches$p2_upset_scored <- ifelse(matches$p2_rank < matches$p1_rank & matches$p1_won == 0, 1, 0)
