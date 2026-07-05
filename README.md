@@ -12,8 +12,9 @@ served via a Plumber API behind a static HTML frontend.
 > caught *after* the refactor shipped, so the previously reported
 > "honest" 0.856 baseline was itself still inflated. The true
 > leak-free numbers are far more modest — see
-> [Model performance](#model-performance). Building a genuinely
-> useful predictor (calibrated Elo) is the current project; see
+> [Model performance](#model-performance). `/predict` is now served
+> by a purpose-built **calibrated Elo + rank predictor** (July 2026)
+> that beats every leak-free baseline and is honestly calibrated; see
 > [`CLAUDE.md`](CLAUDE.md) for the full state.
 
 ## Pipeline
@@ -34,9 +35,11 @@ load_atp_matches → clean_matches        # R/load_matches.R (+ impute_heights.R
   → split_train_ids → {train, ids}       # R/split_train_ids.R
 ```
 
-Champion engine: XGBoost on ~100 engineered features (serve/return %,
-point dominance, break-point ratios, 30-match rolling form, as-of Elo
-and Elo-derived odds).
+**Served model** (`R/predict_elo.R`): calibrated Elo + rank — a
+logistic regression on overall/surface Elo differences and log rank
+ratio, exactly antisymmetric by construction. The XGBoost stack on
+~100 engineered features (serve/return %, point dominance, rolling
+form) remains as the historical-row research pipeline.
 
 ## How to run
 
@@ -49,6 +52,7 @@ Rscript analysis/build_training_data.R     # pipeline -> data/*.csv + serving sn
 Rscript analysis/train_model.R             # time-split baseline + honest holdout metrics
 Rscript analysis/tune_model.R              # (optional) time-aware hyperparameter search
 Rscript analysis/train_production_model.R  # final model on ALL data -> models/model.rds
+Rscript analysis/train_elo_predictor.R     # SERVED predictor -> models/elo_predictor.rds
 Rscript tests/testthat.R                   # regression suite
 plumber::pr_run(plumber::pr("api.R"))      # serve predictions on :8000
 ```
@@ -69,9 +73,10 @@ past via the rolling-average features.
 
 | | Accuracy | AUC | Brier |
 |---|---|---|---|
-| Baseline XGBoost (leak-free) | 0.617 | 0.669 | 0.235 |
+| **Calibrated Elo + rank (SERVED)** | **0.642** | **0.701** | **0.219** |
+| "Better ATP rank wins" | 0.640 | | |
 | Pure as-of Elo (rating diff → odds) | 0.630 | 0.689 | 0.241 |
-| "Better ATP rank wins" | **0.640** | | |
+| Baseline XGBoost (leak-free) | 0.617 | 0.669 | 0.235 |
 
 The sobering, honest picture: the ~100 rolling-form features currently
 add **nothing** over a single Elo rating or the ATP ranking itself.
@@ -96,27 +101,26 @@ work, not knobs, is the bottleneck).
 
 ## Known limitations
 
-- **The served model (`models/model.rds`) predates the `rank_diff`
-  fix** — it was trained with the leak and its apparent skill rode on
-  it. Because inference always computed `rank_diff` correctly
-  (p1 − p2), the leak channel is empty at serve time, which is why
-  `/predict` collapsed to ≈0.5 on most matchups (e.g. #1 vs #1921
-  ≈ 0.54). The earlier "train/serve task mismatch" explanation is
-  superseded by this finding. The endpoint remains **experimental**
-  until the replacement predictor (below) lands; it is **not** a
-  betting tool.
+- **Tennis is genuinely hard to predict.** The served model's 0.642
+  accuracy / 0.701 AUC is real, calibrated skill — but bookmakers only
+  reach ~0.70, so single-match probabilities are informed estimates,
+  not certainties. Not a betting tool.
+- **Ratings and ranks are as of the last data refresh** (each player's
+  most recent match in the local `tennis_atp` clone). Re-run the
+  pipeline + `train_elo_predictor.R` after refreshing data.
 - **`bp_ratio`** is `+Inf` in ~83% of rows (divide-by-zero in
   `match_stats.R`); the degenerate `bp_ratio_av_*` columns are dropped
-  before modelling. A principled root-cause fix is pending.
+  before modelling in the research pipeline. Root-cause fix pending.
 
-### Current project: a genuinely useful predictor
+### Historical note (July 2026)
 
-Pure as-of Elo already beats the leak-free XGBoost and is inherently
-an A-vs-B rating — no train/serve gap possible. The plan: a calibrated
-(surface-aware) Elo predictor for the interactive task, evaluated on
-the time-based holdout against the honest bar of **0.640** ("better
-rank wins"). The XGBoost stack stays as the historical-row research
-pipeline.
+The previous XGBoost serving path was retired after the third leak was
+found: its training `rank_diff` encoded winner-minus-loser rank (the
+label was 100% recoverable), while serving computed p1 − p2, so its
+apparent 0.856 skill vanished at serve time — the earlier "train/serve
+task mismatch" theory is superseded. `R/predict.R` + `models/model.rds`
+remain as a research path; possible future gains for the served model:
+warm-starting Elo before 2020, K-factor tuning, margin-of-victory Elo.
 
 ## Data
 

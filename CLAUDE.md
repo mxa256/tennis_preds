@@ -9,12 +9,15 @@ match context, it returns the probability that player 1 wins. Trained on
 Jeff Sackmann's `tennis_atp` match-level data, served via a Plumber R API
 plus a static HTML frontend.
 
-Champion model: XGBoost on ~50 engineered features (serve %, return %,
-point dominance, break-point conversion, 30-match rolling form averages,
-Elo ratings and Elo-derived match odds). NOTE (2026-07): leak-free, this
-model is WEAK — acc 0.617 on the time-based holdout, below pure as-of
-Elo (0.630) and "better rank wins" (0.640). See Known issues (third
-leak) and Current project.
+Served model (since 2026-07): **calibrated Elo + rank predictor**
+(`R/predict_elo.R`) — logistic regression on overall/surface Elo
+deltas + log rank ratio, exactly antisymmetric by construction.
+Honest 2025–26 holdout: acc 0.642 / AUC 0.701 / Brier 0.219,
+calibrated by decile (bars: better-rank 0.640, leak-free XGBoost
+0.617; ~0.70 is the literature ceiling). The XGBoost pipeline
+(~100 rolling-form features) remains as the historical-row research
+stack; leak-free it is WEAK (acc 0.617) — see Known issues (third
+leak).
 
 ## Layout
 
@@ -34,10 +37,12 @@ tennis_preds/
 │   ├── prune_columns.R     #   prune_columns(rolled) → list(clean, long)
 │   ├── dummify.R           #   dummify_clean(clean) — one-hot + drop non-model cols
 │   ├── split_train_ids.R   #   split_train_ids(clean) → list(train, ids)
-│   └── predict.R           #   Inference: get_recent_averages/prepare_features/predict_winner
+│   ├── predict.R           #   Legacy XGBoost inference (research path; API no longer uses it)
+│   └── predict_elo.R       #   SERVED inference: calibrated Elo+rank predictor (fit/ratings/predict_winner_elo)
 ├── analysis/               # Orchestration + EDA (side effects live here)
 │   ├── build_training_data.R #  compose R/ pipeline → data/*.csv
 │   ├── train_model.R       #   time-split baseline XGBoost + holdout
+│   ├── train_elo_predictor.R # train/evaluate/save the SERVED Elo predictor
 │   ├── tune_model.R        #   time-aware hyperparameter search
 │   └── eda.qmd             #   lean Quarto EDA (sources R/)
 ├── tests/testthat/         # Regression suite (run tests/testthat.R)
@@ -72,6 +77,9 @@ Rscript tests/testthat.R
 # Train the final model on ALL data + promote -> models/model.rds
 # (model .rds are gitignored; run this once on a fresh clone)
 Rscript analysis/train_production_model.R
+
+# Train + save the SERVED interactive predictor (models/elo_predictor.rds)
+Rscript analysis/train_elo_predictor.R
 
 # Serve the prediction API on port 8000
 plumber::pr_run(plumber::pr("api.R"))
@@ -125,16 +133,16 @@ plumber::pr_run(plumber::pr("api.R"))
   `match_stats.R`). `analysis/train_model.R` drops the degenerate
   `bp_ratio_av_*` columns; a root-cause formula fix is a pending
   deliberate feature change (changes model inputs).
-- **Interactive predictor is experimental — and the served
-  `models/model.rds` predates the rank_diff fix.** The step-7
-  "train/serve task mismatch" explanation is SUPERSEDED: the primary
-  cause of the interactive collapse (≈0.5 on most pairs; #1 vs #1921
-  ≈ 0.54) is the third leak — training rank_diff encoded
-  winner−loser, while inference always computed p1−p2, so the channel
-  carrying most of the model's discriminative power is empty at serve
-  time. The model was never good; it had the answer key during
-  evaluation. Replacement (calibrated Elo, inherently A-vs-B) is the
-  current project. Old leaky model kept as `models/model_legacy.rds`.
+- **The XGBoost serving path was retired (2026-07).** History: the
+  interactive collapse (≈0.5 on most pairs) blamed on a "train/serve
+  task mismatch" in step 7 was actually the third leak — training
+  rank_diff encoded winner−loser while inference computed p1−p2, so
+  the channel carrying the model's discriminative power was empty at
+  serve time. The model was never good; it had the answer key during
+  evaluation. `/predict` now serves the calibrated Elo predictor
+  (`R/predict_elo.R`, commits 604a893/e2d3254). `R/predict.R` +
+  `models/model.rds` remain as the historical-row research path only;
+  old leaky model kept as `models/model_legacy.rds`.
 - **`renv` lockfile is lean by design.** `renv.lock` locks the
   `DESCRIPTION` deps + transitive (currently 131 pkgs: runtime +
   tidymodels training stack + testthat). The legacy notebooks' wider
@@ -177,26 +185,30 @@ See `git log refresh-2026` for the play-by-play. High-level arc:
 pipeline. Its evaluation discipline ultimately surfaced all three
 leaks — the third only after the refactor itself had shipped.
 
-## Current project: a genuinely useful predictor (post-leak-#3)
+## Elo predictor: SHIPPED (2026-07-04)
 
-State as of 2026-07-04 (do not re-derive the hard way):
+The calibrated Elo predictor is built, tested, and serving `/predict`
+(commits 604a893 + e2d3254). Summary (do not re-derive the hard way):
 
-1. **The third leak is fixed in the pipeline (commit 9dd74ad) but the
-   served `models/model.rds` is still the leak-trained artifact.**
-   Re-promoting a leak-free XGBoost is pointless — leak-free it loses
-   to raw Elo — so the serving path should move to the new predictor
-   below rather than get retrained in place.
-2. **Honest bar: 0.640** ("better ATP rank wins" on the 2025–26
-   time-based holdout). Leak-free XGBoost 0.617 / AUC 0.669; pure
-   as-of Elo 0.630 / 0.689 with roughly-calibrated probabilities,
-   slightly overconfident at the extremes. Literature ceiling ≈0.70.
-3. **Direction chosen: calibrated Elo** (surface-aware blend, K-factor
-   / recalibration of the delta→probability mapping). Elo is
-   inherently an A-vs-B rating, so the interactive task IS its native
-   task — no train/serve gap possible. The full Elo walk on 2020–26
-   takes ~6s (`compute_player_elos`), so iteration is cheap.
-4. **`bp_ratio`** degenerate feature (+Inf ~83% rows) still dropped;
-   root-cause formula fix pending (deliberate feature change).
+- **Model:** glm on antisymmetric features only — overall Elo delta,
+  surface Elo delta (learned blend ≈ 1/3 surface), log rank ratio,
+  delta:bo5 interactions; NO intercept / NO bo5 main effect (slot-bias
+  artifacts), so P(A,B)+P(B,A)==1 exactly. Fit on all 13,132 labelled
+  rows; artifact `models/elo_predictor.rds` = glm + per-player current
+  ratings (overall + per-surface, via `compute_player_elos`'
+  `final_elos` attribute) + latest rank.
+- **Honest holdout (2025–26, n=2913): acc 0.642 / AUC 0.701 / Brier
+  0.219, calibrated by decile.** Experiment ladder: raw Elo 0.630 →
+  +surface 0.635 → +recalibration (Brier 0.241→0.221) → +learned
+  blend 0.641 → +rank 0.644 eval-form / 0.642 symmetric-form. The
+  accuracy edge over the 0.640 rank bar is within noise; the real
+  wins are AUC, calibration, and no-leak-by-construction.
+- **Possible future improvements** (none started): warm-start the Elo
+  walk pre-2020 (upstream data goes back decades; 2020 cold start
+  wastes early seasons), K-factor tuning, margin-of-victory Elo.
+- **`bp_ratio`** degenerate feature (+Inf ~83% rows) still dropped in
+  the research pipeline; root-cause formula fix pending.
 
 Keep the time-based-holdout / leak-audit discipline; every claimed
-improvement must beat 0.640 on the holdout, evaluated leak-free.
+improvement must beat the shipped 0.642/0.701/0.219 on the holdout,
+evaluated leak-free.
