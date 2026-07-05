@@ -85,6 +85,24 @@ saveRDS(predictor, here::here("models", "elo_predictor.rds"))
 cat(sprintf("\nSaved models/elo_predictor.rds (%d players rated, %d with rank)\n",
             nrow(ratings), sum(!is.na(ratings$rank))))
 
+# Static export for the GitHub Pages twin (docs/index.html): the model
+# is just glm coefficients + a ratings table, so the browser does the
+# inference itself -- no server, free hosting. Full-precision digits
+# matter: the coefficients are ~1e-3. Only ranked players are exported
+# (log_rank is a model input). Push after retraining to update the
+# public app.
+web <- list(
+  coefficients = as.list(coef(model)),
+  ratings      = ratings[!is.na(ratings$rank), ],
+  meta = list(
+    trained_through = predictor$meta$trained_through,
+    holdout         = as.list(round(metrics, 4))
+  )
+)
+jsonlite::write_json(web, here::here("docs", "model.json"),
+                     auto_unbox = TRUE, digits = NA)
+cat("Wrote docs/model.json (GitHub Pages twin)\n")
+
 # sanity: a rivalry, a mismatch, and both orderings summing to 1
 sane <- function(a, b) {
   p  <- predict_winner_elo(a, b, "Hard", 3, predictor)

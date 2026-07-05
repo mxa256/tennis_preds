@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>🎾 Tennis Match Predictor</title>
   <style>
     body {
@@ -74,6 +76,16 @@
       background: #fff;
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      white-space: pre-line;
+    }
+
+    #result:empty { display: none; }
+
+    .fineprint {
+      font-size: 0.8em;
+      color: #666;
+      max-width: 480px;
+      margin: 8px auto;
     }
   </style>
 </head>
@@ -103,14 +115,14 @@
     <button type="submit">🎾 Predict Winner 🎾</button>
   </form>
 
-  <p style="font-size:0.8em;color:#666;max-width:480px;margin:8px auto;">
+  <p class="fineprint">
     Calibrated Elo + ranking model, honestly evaluated (holdout: 64%
     accuracy, AUC 0.70, well-calibrated). Tennis is genuinely hard to
     predict — even bookmakers only reach ~70% — so treat these as
     informed estimates, not betting advice.
   </p>
 
-  <details style="font-size:0.8em;color:#666;max-width:480px;margin:8px auto;">
+  <details class="fineprint">
     <summary style="cursor:pointer;font-weight:bold;">📝 Quirks &amp; fine print</summary>
     <ul style="margin:8px 0 4px;padding-left:20px;line-height:1.5;">
       <li>🧊 Retired or inactive players (yes, Roger Federer is in the
@@ -128,70 +140,82 @@
     </ul>
   </details>
 
+  <p class="fineprint" id="freshness" style="text-align:center;"></p>
+
   <div id="result"></div>
 
-  <!-- Shared autocomplete list, filled from the API's /players
-       endpoint on page load (all rated players, best rank first). -->
   <datalist id="players-list"></datalist>
 
   <script>
-// Served by the API (or a tunnel): use relative paths, so the app
-// works at any URL. Opened as a bare file:// double-click: fall back
-// to the local API.
-const API_BASE = location.protocol === 'file:' ? 'http://localhost:8000' : '';
+// Static twin of the local app: the model (5 logistic-regression
+// coefficients + per-player Elo ratings and rank) ships as model.json
+// and inference happens right here in the browser. No server.
+let MODEL = null;
 
-fetch(API_BASE + '/players')
+function fmtDate(yyyymmdd) {
+  const s = String(yyyymmdd);
+  const months = ['Jan','Feb','Mar','Apr','May','Jun',
+                  'Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${Number(s.slice(6, 8))} ${months[Number(s.slice(4, 6)) - 1]} ${s.slice(0, 4)}`;
+}
+
+fetch('./model.json')
   .then(r => r.json())
-  .then(names => {
+  .then(m => {
+    MODEL = m;
     const dl = document.getElementById('players-list');
-    names.forEach(n => {
-      const o = document.createElement('option');
-      o.value = n;
-      dl.appendChild(o);
-    });
+    m.ratings
+      .slice()
+      .sort((a, b) => a.rank - b.rank)
+      .forEach(p => {
+        const o = document.createElement('option');
+        o.value = p.name;
+        dl.appendChild(o);
+      });
+    document.getElementById('freshness').textContent =
+      `Ratings data through ${fmtDate(m.meta.trained_through)} · ${m.ratings.length} players rated`;
   })
-  .catch(() => console.warn('Player list unavailable — is the API running?'));
-</script>
-
-  <script>
-document.getElementById('predictForm').onsubmit = async function(e) {
-  e.preventDefault();
-  const player1 = document.getElementById('player1').value;
-  const player2 = document.getElementById('player2').value;
-  const surface = document.getElementById('surface').value;
-  const best_of = parseInt(document.getElementById('best_of').value, 10);
-
-  const response = await fetch(API_BASE + '/predict', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ player1, player2, surface, best_of })
+  .catch(() => {
+    document.getElementById('result').innerText =
+      'Could not load model.json — this page needs to be served over ' +
+      'http(s), e.g. GitHub Pages.';
   });
 
-  const data = await response.json();
+document.getElementById('predictForm').onsubmit = function(e) {
+  e.preventDefault();
+  const out = document.getElementById('result');
+  if (!MODEL) { out.innerText = 'Model still loading — try again.'; return; }
 
-  if (data.error) {
-    // Display the error message if any
-    document.getElementById('result').innerText = `Error: ${data.error}`;
-  } else {
-    // Extract the probability that player1 wins
-    const player1Probability = data.p1_win_probability;
+  const player1 = document.getElementById('player1').value.trim();
+  const player2 = document.getElementById('player2').value.trim();
+  const surface = document.getElementById('surface').value;
+  const bo5 = document.getElementById('best_of').value === '5' ? 1 : 0;
 
-    // Determine the winner
-    let winner, winnerProbability;
-    if (player1Probability > 0.5) {
-      winner = player1;
-      winnerProbability = player1Probability;
-    } else {
-      winner = player2;
-      winnerProbability = 1 - player1Probability;
-    }
-    const percent = (winnerProbability * 100).toFixed(2);
-
-    // Display predicted winner and probability
-    // Use toFixed(2) to show probability with two decimal places
-    document.getElementById('result').innerText =
-      `🏆 Predicted Winner: ${winner}\n🎾 Probability: ${percent}%`;
+  if (player1 === player2) {
+    out.innerText = 'Player 1 and Player 2 must be different.';
+    return;
   }
+  const r1 = MODEL.ratings.find(r => r.name === player1);
+  const r2 = MODEL.ratings.find(r => r.name === player2);
+  if (!r1 || !r2) {
+    out.innerText = `Unknown player: "${!r1 ? player1 : player2}" — ` +
+      'pick a name from the autocomplete suggestions.';
+    return;
+  }
+
+  // Same arithmetic as R/predict_elo.R: antisymmetric logistic model.
+  const c = MODEL.coefficients;
+  const dAll = r1.elo_all - r2.elo_all;
+  const dSurf = r1['elo_' + surface] - r2['elo_' + surface];
+  const logRank = Math.log(r2.rank / r1.rank);
+  const z = c.d_all * dAll + c.d_surf * dSurf + c.log_rank * logRank +
+    bo5 * (c['d_all:is_bo5'] * dAll + c['d_surf:is_bo5'] * dSurf);
+  const p1 = 1 / (1 + Math.exp(-z));
+
+  const winner = p1 > 0.5 ? player1 : player2;
+  const percent = ((p1 > 0.5 ? p1 : 1 - p1) * 100).toFixed(2);
+  out.innerText =
+    `🏆 Predicted Winner: ${winner}\n🎾 Probability: ${percent}%`;
 };
 </script>
 

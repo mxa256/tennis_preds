@@ -29,6 +29,16 @@ function(req, res) {
 source(here::here("R", "predict_elo.R"))
 predictor <- readRDS(here::here("models", "elo_predictor.rds"))
 
+#* Serve the frontend at the root, so the whole app lives at one URL
+#* (http://localhost:8000) -- which also makes it shareable through a
+#* tunnel (ngrok / cloudflared), since the page calls the API with
+#* relative paths when served from here.
+#* @get /
+#* @serializer html
+function() {
+  paste(readLines(here::here("index.html"), warn = FALSE), collapse = "\n")
+}
+
 #* Rated player names for the frontend's autocomplete, most relevant
 #* (best current rank) first. Regenerates with every retrain, so the
 #* list can never go stale the way a hardcoded one would.
