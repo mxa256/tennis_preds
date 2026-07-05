@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Tennis Match Predictor</title>
+  <title>🎾 Tennis Match Predictor</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -31,15 +31,28 @@
 
     input[type="text"] {
       width: 100%;
-      padding: 8px;
-      margin-bottom: 15px;
+      padding: 10px;
+      margin-bottom: 22px;
       border: 1px solid #ccc;
       border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 22px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fff;
+      font-size: 15px;
+      box-sizing: border-box;
     }
 
     button {
       width: 100%;
-      padding: 10px;
+      padding: 14px;
+      margin-top: 10px;
       background: #28a745;
       border: none;
       border-radius: 4px;
@@ -65,7 +78,7 @@
   </style>
 </head>
 <body>
-  <h1>Tennis Match Predictor</h1>
+  <h1>🎾 Tennis Match Predictor 🎾</h1>
 
   <form id="predictForm">
     <label for="player1">Player 1:</label>
@@ -76,18 +89,18 @@
 
     <label for="surface">Surface:</label>
     <select id="surface" name="surface">
-      <option value="Hard" selected>Hard</option>
-      <option value="Clay">Clay</option>
-      <option value="Grass">Grass</option>
+      <option value="Hard" selected>🏟️ Hard</option>
+      <option value="Clay">🧱 Clay</option>
+      <option value="Grass">🌱 Grass</option>
     </select>
 
     <label for="best_of">Best of:</label>
     <select id="best_of" name="best_of">
       <option value="3" selected>3 sets</option>
-      <option value="5">5 sets (Slam)</option>
+      <option value="5">5 sets (Slam) 🏆</option>
     </select>
 
-    <button type="submit">Predict Winner</button>
+    <button type="submit">🎾 Predict Winner 🎾</button>
   </form>
 
   <p style="font-size:0.8em;color:#666;max-width:480px;margin:8px auto;">
@@ -152,8 +165,8 @@ document.getElementById('predictForm').onsubmit = async function(e) {
 
     // Display predicted winner and probability
     // Use toFixed(2) to show probability with two decimal places
-    document.getElementById('result').innerText = 
-      `Predicted Winner: ${winner}\nProbability: ${percent}%`;
+    document.getElementById('result').innerText =
+      `🏆 Predicted Winner: ${winner}\n🎾 Probability: ${percent}%`;
   }
 };
 </script>
