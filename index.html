@@ -82,10 +82,10 @@
 
   <form id="predictForm">
     <label for="player1">Player 1:</label>
-    <input type="text" id="player1" name="player1" list="player1-list" placeholder="Start typing..." required>
+    <input type="text" id="player1" name="player1" list="players-list" placeholder="Start typing..." required>
 
     <label for="player2">Player 2:</label>
-    <input type="text" id="player2" name="player2" list="player2-list" placeholder="Start typing..." required>
+    <input type="text" id="player2" name="player2" list="players-list" placeholder="Start typing..." required>
 
     <label for="surface">Surface:</label>
     <select id="surface" name="surface">
@@ -112,23 +112,24 @@
 
   <div id="result"></div>
 
-  <!-- Datalists for autofill -->
-  <datalist id="player1-list">
-    <option value="Novak Djokovic">
-    <option value="Rafael Nadal">
-    <option value="Roger Federer">
-    <option value="Andy Murray">
-    <!-- Add more players as needed -->
-  </datalist>
+  <!-- Shared autocomplete list, filled from the API's /players
+       endpoint on page load (all rated players, best rank first). -->
+  <datalist id="players-list"></datalist>
 
-  <datalist id="player2-list">
-    <option value="Novak Djokovic">
-    <option value="Rafael Nadal">
-    <option value="Roger Federer">
-    <option value="Andy Murray">
-    <!-- Add more players as needed -->
-  </datalist>
-    
+  <script>
+fetch('http://localhost:8000/players')
+  .then(r => r.json())
+  .then(names => {
+    const dl = document.getElementById('players-list');
+    names.forEach(n => {
+      const o = document.createElement('option');
+      o.value = n;
+      dl.appendChild(o);
+    });
+  })
+  .catch(() => console.warn('Player list unavailable — is the API running?'));
+</script>
+
   <script>
 document.getElementById('predictForm').onsubmit = async function(e) {
   e.preventDefault();

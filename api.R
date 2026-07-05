@@ -29,6 +29,15 @@ function(req, res) {
 source(here::here("R", "predict_elo.R"))
 predictor <- readRDS(here::here("models", "elo_predictor.rds"))
 
+#* Rated player names for the frontend's autocomplete, most relevant
+#* (best current rank) first. Regenerates with every retrain, so the
+#* list can never go stale the way a hardcoded one would.
+#* @get /players
+function() {
+  r <- predictor$ratings[!is.na(predictor$ratings$rank), ]
+  r$name[order(r$rank)]
+}
+
 #* Predict P(player1 beats player2) in a given match context.
 #* @param player1 Character: Name of Player 1
 #* @param player2 Character: Name of Player 2
