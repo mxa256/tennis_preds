@@ -26,7 +26,8 @@ for (f in c(
   "prune_columns.R",
   "dummify.R",
   "split_train_ids.R",
-  "predict.R"
+  "predict.R",
+  "predict_elo.R"
 )) {
   source(here::here("R", f))
 }

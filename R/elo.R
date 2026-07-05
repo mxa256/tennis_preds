@@ -126,13 +126,32 @@ compute_player_elos <- function(matches, first_date = as.Date("2018-01-01")) {
   apply(elo_input, 1, computeEloByRow)
 
   keep <- seq_len(asof_i)
-  data.frame(
+  out <- data.frame(
     name = asof_name[keep],
     tourney_id = asof_tid[keep],
     match_num = as.integer(asof_mnum[keep]),
     elo_asof = asof_elo[keep],
     stringsAsFactors = FALSE
   )
+
+  # Each player's CURRENT rating (after their final match in the data),
+  # attached as an attribute: the as-of values above are pre-match by
+  # design, so a player's latest as-of row stops one result short of
+  # "current". The interactive predictor's serving table needs current.
+  # An attribute keeps the return frame (and all existing consumers)
+  # unchanged.
+  player_names <- ls(playersToElo)
+  attr(out, "final_elos") <- data.frame(
+    name = player_names,
+    elo_final = vapply(
+      player_names,
+      function(nm) tail(playersToElo[[nm]]$ranking, n = 1),
+      numeric(1),
+      USE.NAMES = FALSE
+    ),
+    stringsAsFactors = FALSE
+  )
+  out
 }
 
 # Probability the higher-rated player wins a best-of-3 match given the
