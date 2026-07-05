@@ -128,6 +128,29 @@ Sackmann's match-level ATP data, currently 2020–2026 YTD (~13k
 modelling rows after cleaning). Upstream lives **outside** the repo at
 `../tennis_atp-master/` and is fetched, not vendored.
 
+### Refresh cadence & log
+
+Refresh **before you start using predictions after a gap** — in
+practice, at the start of each surface swing / before each Slam, or
+roughly monthly in season. More often buys little: upstream itself
+updates irregularly (sometimes weeks behind the tour), and ratings
+only move when new matches land. The full cycle takes ~2 minutes:
+
+```r
+source("R/refresh_data.R")                 # pull upstream
+Rscript analysis/build_training_data.R     # rebuild data/ + serving snapshot
+Rscript analysis/train_elo_predictor.R     # refit + save served predictor
+Rscript tests/testthat.R                   # suite must stay green
+```
+
+After refreshing, add a row here (data-through = the
+`trained_through` date printed by the training script / stored in
+`models/elo_predictor.rds` meta):
+
+| Refreshed | Data through | Notes |
+|---|---|---|
+| 2026-05-17 | 2026-04-22 | initial refactor-era fetch |
+
 EDA domain notes (still valid): match outcomes vary by surface;
 taller players tend to serve bigger; the field is dominated by a
 small set of elite players, which is why pooled accuracy is high while
