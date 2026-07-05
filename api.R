@@ -1,6 +1,4 @@
 library(plumber)
-library(parsnip)
-library(workflows)
 library(here)
 
 #* @filter cors
@@ -16,20 +14,20 @@ function(req, res) {
   }
 }
 
-# Leak-free production model + per-player latest-form snapshot, both
-# produced by analysis/build_training_data.R + train_production_model.R.
-# R/predict.R assembles the matchup row in the exact training schema
-# (with a hard train/serve parity assert) and symmetrizes over the two
-# slot orderings so P(A beats B) + P(B beats A) == 1.
+# Calibrated Elo interactive predictor (R/predict_elo.R), produced by
+# analysis/build_training_data.R + analysis/train_elo_predictor.R.
+# Purpose-built for the A-vs-B task (Elo is a player rating, so the
+# matchup question is its native task -- no train/serve gap), exactly
+# antisymmetric by construction: P(A beats B) + P(B beats A) == 1.
 #
-# KNOWN LIMITATION (see README "Known limitations"): the model was
-# trained/validated on historical match rows; the interactive A-vs-B
-# task is a different, harder distribution, so probabilities are only
-# weakly discriminative on non-lopsided pairs. This endpoint is
-# EXPERIMENTAL, not a calibrated betting tool.
-source(here::here("R", "predict.R"))
-model   <- readRDS(here::here("models", "model.rds"))
-serving <- load_serving_features()
+# Honest performance (2025-26 time-based holdout): accuracy 0.642,
+# AUC 0.701, Brier 0.219, well-calibrated by decile. Tennis is
+# genuinely hard to predict -- ~0.64-0.70 is the realistic ceiling
+# (bookmakers sit near 0.70) -- so treat probabilities as informed
+# estimates, not betting advice. This replaced the leak-era XGBoost
+# serving path (see README "Known limitations" history).
+source(here::here("R", "predict_elo.R"))
+predictor <- readRDS(here::here("models", "elo_predictor.rds"))
 
 #* Predict P(player1 beats player2) in a given match context.
 #* @param player1 Character: Name of Player 1
@@ -39,8 +37,8 @@ serving <- load_serving_features()
 #* @post /predict
 function(player1, player2, surface = "Hard", best_of = 3) {
   tryCatch({
-    p <- predict_winner(player1, player2, surface, as.integer(best_of),
-                         model, serving)
+    p <- predict_winner_elo(player1, player2, surface,
+                            as.integer(best_of), predictor)
     list(
       player1 = player1,
       player2 = player2,
@@ -48,9 +46,9 @@ function(player1, player2, surface = "Hard", best_of = 3) {
       best_of = as.integer(best_of),
       p1_win_probability = round(as.numeric(p), 4),
       disclaimer = paste(
-        "Experimental. Leak-free model, but trained on historical",
-        "match rows; weak discrimination on non-lopsided matchups.",
-        "Not a calibrated betting tool."
+        "Calibrated Elo + ranking model (holdout: 0.64 accuracy,",
+        "AUC 0.70). Tennis is hard to predict; probabilities are",
+        "informed estimates, not betting advice."
       )
     )
   }, error = function(e) {

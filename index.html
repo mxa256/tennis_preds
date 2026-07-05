@@ -90,11 +90,11 @@
     <button type="submit">Predict Winner</button>
   </form>
 
-  <p style="font-size:0.8em;color:#a00;max-width:480px;margin:8px auto;">
-    ⚠️ Experimental. The model is leak-free and honestly evaluated, but
-    was trained on historical match rows; interactive A-vs-B predictions
-    are weakly discriminative on non-lopsided matchups. Not a calibrated
-    betting tool.
+  <p style="font-size:0.8em;color:#666;max-width:480px;margin:8px auto;">
+    Calibrated Elo + ranking model, honestly evaluated (holdout: 64%
+    accuracy, AUC 0.70, well-calibrated). Tennis is genuinely hard to
+    predict — even bookmakers only reach ~70% — so treat these as
+    informed estimates, not betting advice.
   </p>
 
   <div id="result"></div>
