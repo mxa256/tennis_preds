@@ -54,8 +54,11 @@ Rscript analysis/tune_model.R              # (optional) time-aware hyperparamete
 Rscript analysis/train_production_model.R  # final model on ALL data -> models/model.rds
 Rscript analysis/train_elo_predictor.R     # SERVED predictor -> models/elo_predictor.rds
 Rscript tests/testthat.R                   # regression suite
-plumber::pr_run(plumber::pr("api.R"))      # serve predictions on :8000
+plumber::pr_run(plumber::pr("api.R"), port = 8000)  # full app on :8000
 ```
+
+The API serves the frontend too — once it's running, the whole app
+lives at <http://localhost:8000> (UI, `/predict`, `/players`).
 
 Model `.rds` artifacts are gitignored (regenerable from the committed
 data + seeded scripts); on a fresh clone run
@@ -64,6 +67,19 @@ solo/local use; `plumber::pr_run` above is the deploy path.
 
 The `/predict` endpoint takes `player1`, `player2`, `surface`
 (Hard/Clay/Grass), `best_of` (3/5) and returns `p1_win_probability`.
+
+## Public app (GitHub Pages)
+
+`docs/` holds a **static twin** of the app, published via GitHub Pages
+(<https://mona.md/tennis_preds/>). The model is small enough — five
+logistic-regression coefficients plus a per-player ratings table — that
+`analysis/train_elo_predictor.R` exports it as `docs/model.json` and
+the browser does the inference itself: no server, no hosting cost, and
+predictions verified identical to the R model to 6 decimal places.
+
+To update the public app: refresh data → retrain → **push** (the
+export regenerates `docs/model.json` automatically). Note that GitHub
+Pages sites are public — anyone with the link can use it.
 
 ## Model performance
 
@@ -139,8 +155,9 @@ only move when new matches land. The full cycle takes ~2 minutes:
 ```r
 source("R/refresh_data.R")                 # pull upstream
 Rscript analysis/build_training_data.R     # rebuild data/ + serving snapshot
-Rscript analysis/train_elo_predictor.R     # refit + save served predictor
+Rscript analysis/train_elo_predictor.R     # refit + save predictor + docs/model.json
 Rscript tests/testthat.R                   # suite must stay green
+# then: git commit docs/model.json + push, to update the public app
 ```
 
 After refreshing, add a row here (data-through = the
@@ -161,7 +178,8 @@ small set of elite players, which is why pooled accuracy is high while
 - `R/` — pure-function pipeline + inference (sourced; not a package)
 - `analysis/` — orchestration scripts (side effects live here)
 - `tests/testthat/` — regression suite (run `tests/testthat.R`)
-- `api.R` / `index.html` — Plumber API + static frontend
+- `api.R` / `index.html` — Plumber API + frontend (local app)
+- `docs/` — static GitHub Pages twin (client-side inference)
 - `CLAUDE.md` — detailed context, conventions, refactor status
 
 ## Author
